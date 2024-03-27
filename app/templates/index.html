@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<div class="col-md-8 mx-auto py-3">
+    <h2>欢迎使用名校联盟考生信息管理系统</h2>
+    <p>
+        请登录以继续操作:
+    </p>
+    {% from 'bootstrap5/form.html' import render_form %}
+    {{ render_form(form) }}
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        {% block head %}
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        {% block styles %}
+            <!-- Bootstrap CSS -->
+            {{ bootstrap.load_css() }}
+        {% endblock %}
+
+        <title>名校联盟考生名单管理系统</title>
+        {% endblock %}
+    </head>
+    <body>
+        
+      {% block navbar %}
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+          <div class="container">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+              <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                  <a class="nav-link" href="{{ url_for('index') }}">主页</span></a>
+                </li>
+                {% if current_user.is_authenticated and not current_user.is_admin %}
+                <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    考生导入
+                  </a>
+                  <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                    <li><a class="dropdown-item" href="{{ url_for('import_students') }}">从表格导入</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('new_student') }}">新增单个考生</a></li>
+                  </ul>
+                </li>
+                <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    考生导出
+                  </a>
+                  <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                    <li><a class="dropdown-item" href="{{ url_for('export_students') }}">导出所有考生</a></li>
+                  </ul>
+                </li>
+                {% endif %}
+              </ul>
+            </div>
+            {% if current_user.is_admin %}
+              <span class="navbar-text" >
+                欢迎管理员 {{ current_user.username }}, <a class="text-decoration-none" href="{{ url_for('logout') }}">登出</a>
+              </span>
+              {% elif current_user.is_authenticated %}
+              <span class="navbar-text">
+                欢迎用户 {{ current_user.nickname }} - {{ current_user.username }}, <a class="text-decoration-none" href="{{ url_for('logout') }}">登出</a>
+              </span>
+            {% endif %}
+          </div>
+      </nav>
+      {% endblock %}
+
+      {% block content %}
+      <div class="container bd-gutter mt-3 my-md-4 bd-layout">
+          {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+              {% for category, message in messages %}
+                {% if category == 'error' %}
+                <div class="alert alert-danger" role="alert">{{ message }}</div>
+                {% else %}
+                <div class="alert alert-info" role="alert">{{ message }}</div>
+                {% endif %}
+              {% endfor %}
+          {% endif %}
+          {% endwith %}
+
+          {# application content needs to be provided in the content block #}
+          {% block app_content %}
+          {% endblock %}
+      </div>
+      {% endblock %}
+
+      <div class="container">
+        <footer class="py-3 my-4 border-top">
+          <p class="text-center text-body-secondary">© 2024 名校联盟版权所有</p>
+        </footer>
+      </div>
+
+      {% block scripts %}
+          <!-- Optional JavaScript -->
+          {{ bootstrap.load_js() }}
+      {% endblock %}
+    </body>
+</html>

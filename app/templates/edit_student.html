@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block app_content %}
+    <h2>编辑学生信息</h2>
+    <p>注：若不需要录入学籍号，学籍号那一栏可以留空</p>
+    <div class="row">
+        <div>
+            {% from 'bootstrap5/form.html' import render_form %}
+            {{ render_form(form) }} 
+        </div>
+    </div>
+{% endblock %}
