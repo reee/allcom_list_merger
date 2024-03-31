@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block app_content %}
+    <h2>各校教师导入情况</h2>
+    <div class="row">        
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>学校名称</th>
+                    <th>已导入教师人数</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in teacher_stats %}
+                <tr>
+                    <td>{{ stat.school_name }}</td>
+                    <td>{{ stat.teacher_count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <a href="{{ url_for('export_teachers') }}" class="btn btn-primary" role="button" aria-pressed="true">导出所有教师</a>
+{% endblock %}

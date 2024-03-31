@@ -1,13 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh">
     <head>
         {% block head %}
-        <!-- Required meta tags -->
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
         {% block styles %}
-            <!-- Bootstrap CSS -->
             {{ bootstrap.load_css() }}
         {% endblock %}
 
@@ -29,20 +27,27 @@
                 </li>
                 {% if current_user.is_authenticated and not current_user.is_admin %}
                 <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    考生导入
-                  </a>
+                  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">考生管理</a>
                   <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
                     <li><a class="dropdown-item" href="{{ url_for('import_students') }}">从表格导入</a></li>
                     <li><a class="dropdown-item" href="{{ url_for('new_student') }}">新增单个考生</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('student_list') }}">已导入考生列表</a></li>
                   </ul>
                 </li>
                 <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    考生导出
-                  </a>
+                  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">教师管理</a>
                   <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                    <li><a class="dropdown-item" href="{{ url_for('export_students') }}">导出所有考生</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('import_teachers') }}">从表格导入</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('teacher_list') }}">已导入教师列表</a></li>
+                  </ul>
+                </li>
+                {% endif %}
+                {% if current_user.is_authenticated %}
+                <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">数据导出</a>
+                  <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                    <li><a class="dropdown-item" href="{{ url_for('student_stats') }}">考生导出</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('teacher_stats') }}">教师导出</a></li>
                   </ul>
                 </li>
                 {% endif %}
@@ -54,7 +59,7 @@
               </span>
               {% elif current_user.is_authenticated %}
               <span class="navbar-text">
-                欢迎用户 {{ current_user.nickname }} - {{ current_user.username }}, <a class="text-decoration-none" href="{{ url_for('logout') }}">登出</a>
+                欢迎 {{ current_user.school_name }} - {{ current_user.username }} , <a class="text-decoration-none" href="{{ url_for('logout') }}">登出</a>
               </span>
             {% endif %}
           </div>
@@ -62,14 +67,14 @@
       {% endblock %}
 
       {% block content %}
-      <div class="container bd-gutter mt-3 my-md-4 bd-layout">
+      <div class="container my-4">
           {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
               {% for category, message in messages %}
                 {% if category == 'error' %}
-                <div class="alert alert-danger" role="alert">{{ message }}</div>
+                <div class="alert alert-danger py-3 px-3 my-3 mx-3" role="alert">{{ message }}</div>
                 {% else %}
-                <div class="alert alert-info" role="alert">{{ message }}</div>
+                <div class="alert alert-info py-3 px-3 my-3 mx-3" role="alert">{{ message }}</div>
                 {% endif %}
               {% endfor %}
           {% endif %}

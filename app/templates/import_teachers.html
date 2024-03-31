@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block app_content %}
+<h2>导入本校老师</h2>
+<div class="row">
+    <div>
+        {% from 'bootstrap5/form.html' import render_form %}
+        {{ render_form(form) }} 
+    </div>
+</div>
+<h5 class="card-title py-2">文档相关要求：</h5>
+<ul class="list-group py-2">
+    <li class="list-group-item">1. 仅支持xlsx文件，且文件需且仅需包含以下8列：<strong>"编码, 姓名, 单位, 任教学届, 密码, 任教学科, 角色, 性别, 是否启用"。</strong></li>
+    <li class="list-group-item">2. 任教学科和角色允许留空，但是如果填写了的话会进行正确性校验。</strong></li>
+</ul>
+{% endblock %}
