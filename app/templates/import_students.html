@@ -10,11 +10,10 @@
 </div>
 <h5 class="card-title py-2">文档相关要求：</h5>
 <ul class="list-group py-2">
-    <li class="list-group-item">1. 仅支持xlsx文件，对单个文件存在多个工作表的，<strong>仅会读取第一个工作表。</strong></li>
+    <li class="list-group-item">1. 仅支持xlsx文件，存在多个工作表的，<strong>仅会读取第一个工作表。</strong></li>
     <li class="list-group-item">2. 文件需且仅需包含以下9列：<strong>"学校代码、学校名称、班级代码、姓名、学籍号、考生类型、考生类型1、考号、科类属性"。</strong></li>
     <li class="list-group-item">3. <strong>"学籍号"和"考生类型1"可留空</strong>，其他不可留空。</strong></li>
     <li class="list-group-item">4. 考生类型只能为如下12种中一种：<strong>"物化生、物化政、物化地、物生地、物生政、物地政、历化政、历化生、历化地、历生政、历生地、历政地"。</strong></li>
     <li class="list-group-item">5. 考号位数只能为<strong>10位</strong>数，班级代码只能为<strong>3位</strong>数，科类属性只能取<strong>"物理类"或"历史类"。</strong></li>
-    <li class="list-group-item">6. 学校用户仅允许导入本校教师，且不允许导入角色为阅卷管理员的教师。</strong></li>
 </ul>
 {% endblock %}

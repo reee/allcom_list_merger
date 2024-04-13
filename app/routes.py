@@ -13,6 +13,7 @@ from app.log_utils import logger
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    test_name = app.config['TEST_NAME']
     if current_user.is_authenticated:
         if current_user.is_admin:
             return redirect(url_for('admin_panel'))
@@ -29,7 +30,7 @@ def index():
             return redirect(url_for('admin_panel'))
         else:
             return redirect(url_for('user_panel'))
-    return render_template('index.html', title='登录', form=form)
+    return render_template('index.html', title='登录', test_name=test_name, form=form)
 
 @app.route('/logout')
 def logout():

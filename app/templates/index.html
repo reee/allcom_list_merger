@@ -2,10 +2,8 @@
 
 {% block app_content %}
 <div class="col-md-8 mx-auto py-3">
-    <h2>欢迎使用名校联盟联考名单管理系统</h2>
-    <p>
-        请登录以继续操作:
-    </p>
+    <h2 class="py-3">欢迎使用全通跨校联考名单管理系统</h2>
+    <p>当前名单用于：<span class="text-warning">{{ test_name }}</span>，请登录以继续操作:</p>
     {% from 'bootstrap5/form.html' import render_form %}
     {{ render_form(form) }}
 </div>
