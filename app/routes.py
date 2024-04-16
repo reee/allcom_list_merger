@@ -75,7 +75,7 @@ def import_users():
         # 读取Excel数据
         df = pd.read_excel(file)
         
-        expected_columns = ['用户名', '密码', '学校简称']
+        expected_columns = ['用户名', '密码', '学届', '学校简称']
         columns = df.columns.tolist()
         if columns != expected_columns:
             missing_columns = set(expected_columns) - set(columns)
@@ -104,6 +104,7 @@ def import_users():
         for _, row in df.iterrows():
             user = User(
                 username=row['用户名'], 
+                grade_name=row['学届'], 
                 school_name=row['学校简称']
                 )
             user.set_password(str(row['密码']))
@@ -386,7 +387,19 @@ def delete_all_students():
         db.session.delete(student)
     db.session.commit()
 
-    flash('所有学生信息已删除', 'info')
+    flash('所有考生信息已删除', 'info')
+    return redirect(url_for('admin_panel'))
+
+@app.route('/delete_all_teachers', methods=['POST'])
+@login_required
+@admin_required
+def delete_all_teachers():
+    teachers = Teacher.query.all()
+    for teacher in teachers:
+        db.session.delete(teacher)
+    db.session.commit()
+
+    flash('所有教师信息已删除', 'info')
     return redirect(url_for('admin_panel'))
 
 @app.route('/student_stats', methods=['GET'])
