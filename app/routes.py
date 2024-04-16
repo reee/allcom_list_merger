@@ -88,16 +88,24 @@ def import_users():
             flash(error_message, 'error')
             return redirect(url_for('import_users'))
 
+        # 检查是否存在重复用户
+        if not df["用户名"].is_unique:
+            flash(f"用户名不唯一，请修正后重新导入", 'error')
+            return redirect(url_for('import_users'))
+
         if form.replace.data:
             # 清除非管理员用户
             non_admin_users = User.query.filter_by(is_admin=False).all()
             for user in non_admin_users:
                 db.session.delete(user)
             db.session.commit()
-            
+
         # 导入新用户
         for _, row in df.iterrows():
-            user = User(username=row['用户名'], school_name=row['学校简称'])
+            user = User(
+                username=row['用户名'], 
+                school_name=row['学校简称']
+                )
             user.set_password(str(row['密码']))
             db.session.add(user)
         db.session.commit()
@@ -223,14 +231,13 @@ def import_teachers():
         valid_subjects = ['语文', '数学', '英语', '物理', '化学', '生物', '政治', '历史', '地理']
         valid_roles = ["任课教师", "科组长"]
 
-        # 导入学生
+        # 检查编码字段是否有重复，一般这里重复是因为存在跨年级的情况
+        if not df["编码"].is_unique:
+            flash(f"教师编码存在重复值，请删除重复的教师后重新导入", 'error')
+            return redirect(url_for('import_teachers'))
+
+        # 导入教师
         for index, row in df.iterrows():
-            # 检查编码字段是否有重复，一般这里重复是因为重复导入了老师
-            if not df["编码"].is_unique:
-                flash(f"教师编码存在重复值，请删除重复的教师后重新导入", 'error')
-                return redirect(url_for('import_teachers'))
-
-
             # 检查学校名称
             if row['单位'] != current_user.school_name:
                 flash(f"存在非本校教师或学校名称缺失或不匹配,请修正后重新导入", 'error')
