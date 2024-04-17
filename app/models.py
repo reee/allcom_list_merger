@@ -27,6 +27,7 @@ class Student(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     school_code = db.Column(db.String(64), index=True)
     school_name = db.Column(db.String(128))
+    grade_name = db.Column(db.String(64))
     class_name = db.Column(db.String(64))
     name = db.Column(db.String(64))
     student_id = db.Column(db.String(20))

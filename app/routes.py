@@ -1,4 +1,5 @@
 import io
+from sqlalchemy.exc import IntegrityError
 from flask import render_template, redirect, request, send_file, session, url_for, flash
 from flask_login import current_user, login_required, login_user, logout_user
 
@@ -13,7 +14,6 @@ from app.log_utils import logger
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    test_name = app.config['TEST_NAME']
     if current_user.is_authenticated:
         if current_user.is_admin:
             return redirect(url_for('admin_panel'))
@@ -30,7 +30,7 @@ def index():
             return redirect(url_for('admin_panel'))
         else:
             return redirect(url_for('user_panel'))
-    return render_template('index.html', title='登录', test_name=test_name, form=form)
+    return render_template('index.html', title='登录', form=form)
 
 @app.route('/logout')
 def logout():
@@ -128,7 +128,7 @@ def import_students():
         # 读取Excel数据
         df = pd.read_excel(file)
 
-        expected_columns = ['学校代码', '学校名称', '班级代码', '姓名', '学籍号', '考生类型', '考生类型1', '考号', '科类属性']
+        expected_columns = ['学校代码', '学校名称', '学届', '班级代码', '姓名', '学籍号', '考生类型1', '考生类型2', '考号', '科类属性']
         columns = df.columns.tolist()
         if sorted(columns) != sorted(expected_columns):
             missing_columns = set(expected_columns) - set(columns)
@@ -141,9 +141,14 @@ def import_students():
             flash(error_message, 'error')
             return redirect(url_for('import_students'))
         
+        # 检查是否存在考号重复学生
+        if not df["考号"].is_unique:
+            flash(f"学生考号不唯一，请修正后重新导入", 'error')
+            return redirect(url_for('import_students'))
+
         if form.replace.data:
-            # 清理现有学生
-            existing_students = Student.query.filter_by(school_name=current_user.school_name).all()
+            # 清理本校本学届现有学生
+            existing_students = Student.query.filter_by(school_name=current_user.school_name, grade_name=current_user.grade_name).all()
             for student in existing_students:
                 db.session.delete(student)
             db.session.commit()
@@ -159,8 +164,12 @@ def import_students():
                 return redirect(url_for('import_students'))
 
             # 检查考生类型
-            if row['考生类型'] not in valid_exam_types:
-                flash(f"存在考生考生类型缺失或不正确,请修正后重新导入", 'error')
+            if row['考生类型1'] not in valid_exam_types:
+                flash(f"存在考生“考生类型1”缺失或不正确,请修正后重新导入", 'error')
+                return redirect(url_for('import_students'))
+
+            if row['学届'] != current_user.grade_name:
+                flash(f"存在考生学届与当前账号不匹配,请修正后重新导入", 'error')
                 return redirect(url_for('import_students'))
 
             # 检查考号位数
@@ -181,17 +190,26 @@ def import_students():
             student = Student(
                 school_code=row['学校代码'], 
                 school_name=row['学校名称'],
+                grade_name=row['学届'],
                 class_name=row['班级代码'],
                 name=row['姓名'],
                 student_id=row['学籍号'],
-                exam_type=row['考生类型'],
-                exam_type1=row['考生类型1'],
+                exam_type=row['考生类型1'],
+                exam_type1=row['考生类型2'],
                 exam_no=row['考号'],
                 subject_type=row['科类属性']
             )
             db.session.add(student)
-        db.session.commit()
-        flash('本校考生信息导入成功', 'info')
+        
+        try:
+            db.session.commit()
+            flash('本校考生信息导入成功', 'info')
+        except IntegrityError as e:
+            error_info = str(e.orig)
+            if 'UNIQUE constraint failed' in error_info:
+                flash('导入学生考号与数据库已有考号重复，请检查相关数据', 'error')
+            else:
+                flash('发生未知错误，请联系管理员！', 'error')
         return redirect(url_for('import_students'))
         
     return render_template('import_students.html', form=form)
@@ -284,6 +302,10 @@ def edit_student(student_id):
     if student.school_name != current_user.school_name:
         flash('您无权编辑其他学校的学生信息', 'error')
         return redirect(url_for('student_list'))
+    
+    if student.grade_name != current_user.grade_name:
+        flash('您无权编辑其他学届的学生信息', 'error')
+        return redirect(url_for('student_list'))
 
     form = EditStudentForm()
     if form.validate_on_submit():
@@ -295,6 +317,7 @@ def edit_student(student_id):
         student.school_code = form.school_code.data
         student.school_name = form.school_name.data
         student.class_name = form.class_name.data
+        student.grade_name = form.grade_name.data
         student.exam_no = form.exam_no.data
         db.session.commit()
         flash('学生信息已更新', 'info')
@@ -309,6 +332,7 @@ def edit_student(student_id):
         form.school_code.data = student.school_code
         form.school_name.data = student.school_name
         form.class_name.data = student.class_name
+        form.grade_name.data = student.grade_name
         form.exam_no.data = student.exam_no
 
     return render_template('edit_student.html', form=form, student=student)
@@ -319,6 +343,10 @@ def delete_student(student_id):
     student = Student.query.get_or_404(student_id)
     if student.school_name != current_user.school_name:
         flash('您无权删除其他学校的学生信息', 'error')
+        return redirect(url_for('student_list'))
+    
+    if student.grade_name != current_user.grade_name:
+        flash('您无权删除其他学届的学生信息', 'error')
         return redirect(url_for('student_list'))
 
     db.session.delete(student)
@@ -331,6 +359,15 @@ def delete_student(student_id):
 def new_student():
     form = EditStudentForm()
     if form.validate_on_submit():
+
+        if form.school_name.data != current_user.school_name:
+            flash('您无权新增其他学校的学生信息', 'error')
+            return redirect(url_for('new_student'))
+        
+        if form.grade_name.data != current_user.grade_name:
+            flash('您无权新增其他年级的学生信息', 'error')
+            return redirect(url_for('new_student'))    
+
         student = Student(
             name=form.name.data,
             student_id=form.student_id.data,
@@ -339,6 +376,7 @@ def new_student():
             subject_type=form.subject_type.data,
             school_code=form.school_code.data,
             class_name=form.class_name.data,
+            grade_name=form.grade_name.data,
             exam_no=form.exam_no.data,
             school_name=form.school_name.data
         )
@@ -351,15 +389,20 @@ def new_student():
 @app.route('/export_students', methods=['GET'])
 @login_required
 def export_students():
-    students = Student.query.all()
+    # 管理员导出所有学生，非管理员只导出本学届学生
+    if current_user.grade_name:
+        students = Student.query.filter_by(grade_name=current_user.grade_name)
+    else:
+        students = Student.query.all()
     data = [{
         '学校代码': student.school_code,
         '学校名称': student.school_name,
         '班级代码': student.class_name,
+        '学届': student.grade_name,
         '姓名': student.name,
         '学籍号': student.student_id,
-        '考生类型': student.exam_type,
-        '考生类型1': student.exam_type1,
+        '考生类型1': student.exam_type,
+        '考生类型2': student.exam_type1,
         '考号': student.exam_no,
         '科类属性': student.subject_type
     } for student in students]
@@ -411,7 +454,11 @@ def student_stats():
     # 计算每个学校的学生人数
     student_stats = []
     for school_name in school_names:
-        student_count = Student.query.filter_by(school_name=school_name).count()
+        if current_user.grade_name:
+            student_count = Student.query.filter_by(school_name=school_name, grade_name=current_user.grade_name).count()
+        else:
+            student_count = Student.query.filter_by(school_name=school_name).count()
+
         student_stats.append({
             'school_name': school_name,
             'student_count': student_count
@@ -459,7 +506,7 @@ def student_list():
     page = request.args.get('page', 1, type=int)
     sort_by = request.args.get('sort_by', 'name', type=str)
 
-    query = Student.query.filter_by(school_name=current_user.school_name)
+    query = Student.query.filter_by(school_name=current_user.school_name, grade_name=current_user.grade_name)
 
     if sort_by == 'name':
         query = query.order_by(Student.name)

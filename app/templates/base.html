@@ -49,12 +49,12 @@
                     <li><a class="dropdown-item" href="{{ url_for('import_users') }}">导入学校用户</a></li>
                     <li>
                       <form action="{{ url_for('delete_all_students') }}" method="post">
-                        <button type="submit" class="btn my-2" onclick="return confirm('确定要删除所有考生信息吗?这个操作无法撤销!')">删除所有考生</button>
+                        <button type="submit" class="btn" onclick="return confirm('确定要删除所有考生信息吗?这个操作无法撤销!')">删除所有考生</button>
                       </form>
                     </li>
                     <li>
                       <form action="{{ url_for('delete_all_teachers') }}" method="post">
-                        <button type="submit" class="btn my-2" onclick="return confirm('确定要删除所有教师信息吗?这个操作无法撤销!')">删除所有教师</button>
+                        <button type="submit" class="btn" onclick="return confirm('确定要删除所有教师信息吗?这个操作无法撤销!')">删除所有教师</button>
                       </form>
                     </li>
                   </ul>
@@ -73,11 +73,11 @@
             </div>
             {% if current_user.is_admin %}
               <span class="navbar-text" >
-                欢迎管理员 {{ current_user.username }}, <a class="text-decoration-none" href="{{ url_for('logout') }}">登出</a>
+                欢迎管理员: {{ current_user.username }}, <a class="text-decoration-none" href="{{ url_for('logout') }}">登出</a>
               </span>
               {% elif current_user.is_authenticated %}
               <span class="navbar-text">
-                欢迎 {{ current_user.school_name }} - {{ current_user.username }} , <a class="text-decoration-none" href="{{ url_for('logout') }}">登出</a>
+                欢迎: {{ current_user.username }}, <a class="text-decoration-none" href="{{ url_for('logout') }}">登出</a>
               </span>
             {% endif %}
           </div>

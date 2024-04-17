@@ -2,6 +2,12 @@
 
 {% block app_content %}
     <h2>各校考生导入情况</h2>
+    {% if current_user.grade_name %}
+    <p class="py-2">注意：仅统计了学届为<strong class="text-primary">{{ current_user.grade_name }}</strong>的考生，点击导出时，也仅导出该学届考生。</p>
+    {% else %}
+    <p class="py-2">注意：以下统计信息包含<strong class="text-primary">所有学届</strong>，导出时也会包含所有学届考生。</p>
+    {% endif %}
+
     <div class="row">        
         <table class="table">
             <thead>
