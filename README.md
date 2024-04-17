@@ -25,11 +25,13 @@ ADMIN_USERNAME=admin
 ADMIN_PASSWORD=changme
 ```
 其中用户名密码都可以随意设置。
+
 7. 导入管理员信息：
 ```bash
 python ./create_admin.py
 ```
 注：若管理员信息有修改，可以再次运行脚本，会对之前的信息进行覆盖。
+
 8. 建立用于守护的systemd service：
 ```bash
 vim /etc/systemd/system/stu-list.service
