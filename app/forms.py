@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField
 from flask_wtf.file import FileField, FileAllowed, FileRequired
-from wtforms.validators import DataRequired, Optional
+from wtforms.validators import DataRequired, Length
 
 class LoginForm(FlaskForm):
     username = StringField('用户名', validators=[DataRequired()])
@@ -26,15 +26,15 @@ class ImportStudentsForm(FlaskForm):
 
 class EditStudentForm(FlaskForm):
     name = StringField('姓名', validators=[DataRequired()])
-    student_id = StringField('学籍号')
+    student_id = StringField('学籍号(可留空)')
     exam_type = SelectField('考生类型1', choices=[('物化生', '物化生'), ('物化政', '物化政'), ('物化地', '物化地'), ('物生地', '物生地'), ('物生政', '物生政'), ('物地政', '物地政'), ('历生政', '历生政'), ('历生地', '历生地'), ('历政地', '历政地'), ('历化政', '历化政'), ('历化生,', '历化生,'), ('历化地', '历化地')], validators=[DataRequired()])
-    exam_type1 = StringField('考生类型2')
+    exam_type1 = StringField('考生类型2(可留空)')
     subject_type = SelectField('科类属性', choices=[('物理类', '物理类'), ('历史类', '历史类')], validators=[DataRequired()])
     school_code = StringField('学校代码', validators=[DataRequired()])
     school_name = StringField('学校名称', validators=[DataRequired()])
-    class_name = StringField('班级代码', validators=[DataRequired()])
+    class_name = StringField('班级代码', validators=[DataRequired(), Length(min=3, max=3)])
     grade_name = StringField('学届', validators=[DataRequired()])
-    exam_no = StringField('考号', validators=[DataRequired()])
+    exam_no = StringField('考号', validators=[DataRequired(), Length(min=10, max=10)])
     submit = SubmitField('提交')
 
 class EditTeacherForm(FlaskForm):

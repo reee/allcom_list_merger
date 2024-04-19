@@ -11,4 +11,3 @@ class Config:
     BOOTSTRAP_SERVE_LOCAL = True
     ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME') or 'admin'
     ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'changeme'
-    TEST_NAME = os.environ.get('TEST_NAME') or '未定义当前考试名称'

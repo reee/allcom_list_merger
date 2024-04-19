@@ -103,11 +103,11 @@ def import_users():
         # 导入新用户
         for _, row in df.iterrows():
             user = User(
-                username=row['用户名'], 
-                grade_name=row['学届'], 
-                school_name=row['学校简称']
+                username=row['用户名'].strip(), 
+                grade_name=row['学届'].strip(), 
+                school_name=row['学校简称'].strip()
                 )
-            user.set_password(str(row['密码']))
+            user.set_password(str(row['密码']).strip())
             db.session.add(user)
         db.session.commit()
         flash('用户导入成功', 'info')
@@ -188,16 +188,16 @@ def import_students():
                 return redirect(url_for('import_students'))
             
             student = Student(
-                school_code=row['学校代码'], 
-                school_name=row['学校名称'],
-                grade_name=row['学届'],
-                class_name=row['班级代码'],
-                name=row['姓名'],
+                school_code=str(row['学校代码']).strip(), 
+                school_name=str(row['学校名称']).strip(),
+                grade_name=str(row['学届']).strip(),
+                class_name=str(row['班级代码']).strip(),
+                name=str(row['姓名']).strip(),
                 student_id=row['学籍号'],
-                exam_type=row['考生类型1'],
+                exam_type=str(row['考生类型1']).strip(),
                 exam_type1=row['考生类型2'],
-                exam_no=row['考号'],
-                subject_type=row['科类属性']
+                exam_no=str(row['考号']).strip(),
+                subject_type=str(row['科类属性']).strip()
             )
             db.session.add(student)
         
