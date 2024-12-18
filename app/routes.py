@@ -148,56 +148,74 @@ def import_students():
 
         if form.replace.data:
             # 清理本校本学届现有学生
-            existing_students = Student.query.filter_by(school_name=current_user.school_name, grade_name=current_user.grade_name).all()
+            existing_students = Student.query.filter_by(
+                school_name=current_user.school_name, 
+                grade_name=current_user.grade_name
+            ).all()
             for student in existing_students:
                 db.session.delete(student)
             db.session.commit()
 
-        valid_exam_types = ["物化生", "物化政", "物化地", "物生地", "物生政", "物地政", "历化政", "历化生", "历化地", "历生政", "历生地", "历政地"]
+        valid_exam_types = ["物化生", "物化政", "物化地", "物生地", "物生政", "物地政", 
+                          "历化政", "历化生", "历化地", "历生政", "历生地", "历政地"]
         valid_subject_types = ["物理类", "历史类"]        
 
         # 导入学生
         for index, row in df.iterrows():
             # 检查学校名称
-            if row['学校名称'] != current_user.school_name:
+            if str(row['学校名称']).strip() != current_user.school_name:
                 flash(f"存在非本校学生或学校名称缺失或学校名称不匹配,请修正后重新导入", 'error')
                 return redirect(url_for('import_students'))
 
-            # 检查考生类型
-            if row['考生类型1'] not in valid_exam_types:
-                flash(f"存在考生“考生类型1”缺失或不正确,请修正后重新导入", 'error')
+            # 检查考生类型1
+            exam_type1 = str(row['考生类型1']).strip() if pd.notna(row['考生类型1']) else ''
+            if exam_type1 and exam_type1 not in valid_exam_types:
+                flash(f"存在考生 考生类型1 不正确,请修正后重新导入", 'error')
+                return redirect(url_for('import_students'))
+            
+            # 检查考生类型2
+            exam_type2 = str(row['考生类型2']).strip() if pd.notna(row['考生类型2']) else ''
+            if exam_type2 and exam_type2 not in valid_exam_types:
+                flash(f"存在考生 考生类型2 不正确,请修正后重新导入", 'error')
                 return redirect(url_for('import_students'))
 
-            if row['学届'] != current_user.grade_name:
+            # 检查学届
+            if str(row['学届']).strip() != current_user.grade_name:
                 flash(f"存在考生学届与当前账号不匹配,请修正后重新导入", 'error')
                 return redirect(url_for('import_students'))
 
             # 检查考号位数
-            if len(str(row['考号'])) != 10:
+            exam_no = str(row['考号']).strip()
+            if len(exam_no) != 10:
                 flash(f"存在考生考号缺失或位数不正确,请修正后重新导入", 'error')
                 return redirect(url_for('import_students'))
 
             # 检查班级代码
-            if len(str(row['班级代码'])) != 3:
+            class_name = str(row['班级代码']).strip()
+            if len(class_name) != 3:
                 flash(f"存在考生班级代码缺失或位数不正确,请修正后重新导入", 'error')
                 return redirect(url_for('import_students'))
 
             # 检查科类属性
-            if row['科类属性'] not in valid_subject_types:
-                flash(f"存在考生科类属性缺失或不正确,请修正后重新导入", 'error')
+            subject_type = str(row['科类属性']).strip() if pd.notna(row['科类属性']) else ''
+            if subject_type and subject_type not in valid_subject_types:
+                flash(f"存在考生 科类属性 不正确,请修正后重新导入", 'error')
                 return redirect(url_for('import_students'))
+            
+            # 处理学籍号
+            student_id = str(row['学籍号']).strip() if pd.notna(row['学籍号']) else ''
             
             student = Student(
                 school_code=str(row['学校代码']).strip(), 
                 school_name=str(row['学校名称']).strip(),
                 grade_name=str(row['学届']).strip(),
-                class_name=str(row['班级代码']).strip(),
+                class_name=class_name,
                 name=str(row['姓名']).strip(),
-                student_id=row['学籍号'],
-                exam_type=str(row['考生类型1']).strip(),
-                exam_type1=row['考生类型2'],
-                exam_no=str(row['考号']).strip(),
-                subject_type=str(row['科类属性']).strip()
+                student_id=student_id,
+                exam_type=exam_type1,
+                exam_type1=exam_type2,
+                exam_no=exam_no,
+                subject_type=subject_type
             )
             db.session.add(student)
         
@@ -205,6 +223,7 @@ def import_students():
             db.session.commit()
             flash('本校考生信息导入成功', 'info')
         except IntegrityError as e:
+            db.session.rollback()
             error_info = str(e.orig)
             if 'UNIQUE constraint failed' in error_info:
                 flash('导入学生考号与数据库已有考号重复，请检查相关数据', 'error')
