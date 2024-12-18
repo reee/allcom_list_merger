@@ -7,6 +7,7 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(64), index=True, unique=True)
     password_hash = db.Column(db.String(128))
     is_admin = db.Column(db.Boolean, default=False)
+    school_code = db.Column(db.Integer, index=True)
     school_name = db.Column(db.String(64))
     grade_name = db.Column(db.String(64))
 

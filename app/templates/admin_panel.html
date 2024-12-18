@@ -1,32 +1,98 @@
 {% extends "base.html" %}
 
 {% block app_content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">数据统计</h4>
+                    
+                    <!-- 学届数据统计 -->
+                    <h5 class="mt-4">各学届数据统计</h5>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>学届</th>
+                                    <th>学生数量</th>
+                                    <th>教师数量</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in grade_stats %}
+                                <tr>
+                                    <td>{{ stat.grade_name }}</td>
+                                    <td>
+                                        {{ stat.student_count }}
+                                        {% if stat.student_count > 0 %}
+                                        <form method="post" style="display: inline-block; margin-left: 10px;">
+                                            <input type="hidden" name="grade_name" value="{{ stat.grade_name }}">
+                                            <button type="submit" name="action" value="delete_grade_students" 
+                                                    class="btn btn-danger btn-sm" 
+                                                    onclick="return confirm('确定要删除{{ stat.grade_name }}的所有学生吗？')">
+                                                清理学生
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ stat.teacher_count }}
+                                        {% if stat.teacher_count > 0 %}
+                                        <form method="post" style="display: inline-block; margin-left: 10px;">
+                                            <input type="hidden" name="grade_name" value="{{ stat.grade_name }}">
+                                            <button type="submit" name="action" value="delete_grade_teachers" 
+                                                    class="btn btn-danger btn-sm"
+                                                    onclick="return confirm('确定要删除{{ stat.grade_name }}的所有教师吗？')">
+                                                清理教师
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('student_list', grade=stat.grade_name) }}" class="btn btn-info btn-sm">查看学生</a>
+                                        <a href="{{ url_for('teacher_list', grade=stat.grade_name) }}" class="btn btn-info btn-sm">查看教师</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
 
-<h2>用户管理</h2>
-<table class="table">
-    <thead>
-        <tr>
-            <th>学校简称</th>
-            <th>用户名</th>
-            <th>学届</th>
-            <th>操作</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for user in users %}
-        <tr>
-            <td>{{ user.school_name }}</td>
-            <td>{{ user.username }}</td>
-            <td>{{ user.grade_name }}</td>
-            <td>
-                <form method="post" style="display: inline;">
-                    <input type="hidden" name="user_id" value="{{ user.id }}">
-                    <button type="submit" name="action" value="delete" class="btn btn-danger btn-sm" onclick="return confirm('确定删除该用户吗?')">删除</button>
-                </form>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+                    <!-- 用户列表 -->
+                    <h5 class="mt-4">已导入的用户列表</h5>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>学校简称</th>
+                                    <th>学校代码</th>
+                                    <th>用户名</th>
+                                    <th>学届</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ user.school_name }}</td>
+                                    <td>{{ user.school_code }}</td>
+                                    <td>{{ user.username }}</td>
+                                    <td>{{ user.grade_name }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
 
+                    <div class="mt-4">
+                        <p class="text-muted">
+                            若需要重新导入用户数据，请点击菜单"系统初始化"-"导入学校用户"。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

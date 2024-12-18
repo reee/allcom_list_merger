@@ -7,112 +7,123 @@
 
         {% block styles %}
             {{ bootstrap.load_css() }}
+            <style>
+                body {
+                    background-color: #f8f9fa;
+                }
+                .navbar {
+                    box-shadow: 0 2px 4px rgba(0,0,0,.08);
+                }
+                .navbar-light {
+                    background-color: #fff !important;
+                }
+                .dropdown-item:active {
+                    background-color: #0d6efd;
+                }
+                .btn-sm {
+                    padding: .25rem .5rem;
+                    font-size: .875rem;
+                    border-radius: .2rem;
+                }
+            </style>
         {% endblock %}
 
         <title>全通跨校联考名单管理系统</title>
         {% endblock %}
     </head>
     <body>
-        
-      {% block navbar %}
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-          <div class="container">
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-              <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-              <ul class="navbar-nav mr-auto">
-                <li class="nav-item active">
-                  <a class="nav-link" href="{{ url_for('index') }}">主页</span></a>
-                </li>
-                {% if current_user.is_authenticated and not current_user.is_admin %}
-                <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">考生管理</a>
-                  <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                    <li><a class="dropdown-item" href="{{ url_for('import_students') }}">从表格导入</a></li>
-                    <li><a class="dropdown-item" href="{{ url_for('new_student') }}">新增单个考生</a></li>
-                    <li><a class="dropdown-item" href="{{ url_for('student_list') }}">已导入考生列表</a></li>
-                  </ul>
-                </li>
-                <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">教师管理</a>
-                  <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                    <li><a class="dropdown-item" href="{{ url_for('import_teachers') }}">从表格导入</a></li>
-                    <li><a class="dropdown-item" href="{{ url_for('teacher_list') }}">已导入教师列表</a></li>
-                  </ul>
-                </li>
-                {% endif %}
-                {% if current_user.is_admin %}
-                <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">系统初始化</a>
-                  <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                    <li><a class="dropdown-item" href="{{ url_for('import_users') }}">导入学校用户</a></li>
-                    <li>
-                      <form action="{{ url_for('delete_all_students') }}" method="post">
-                        <button type="submit" class="btn" onclick="return confirm('确定要删除所有考生信息吗?这个操作无法撤销!')">删除所有考生</button>
-                      </form>
-                    </li>
-                    <li>
-                      <form action="{{ url_for('delete_all_teachers') }}" method="post">
-                        <button type="submit" class="btn" onclick="return confirm('确定要删除所有教师信息吗?这个操作无法撤销!')">删除所有教师</button>
-                      </form>
-                    </li>
-                  </ul>
-                </li>
-                {% endif %}
-                {% if current_user.is_authenticated %}
-                <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">数据导出</a>
-                  <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                    <li><a class="dropdown-item" href="{{ url_for('student_stats') }}">考生导出</a></li>
-                    <li><a class="dropdown-item" href="{{ url_for('teacher_stats') }}">教师导出</a></li>
-                  </ul>
-                </li>
-                {% endif %}
-              </ul>
+        {% block navbar %}
+        <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+            <div class="container">
+                <a class="navbar-brand" href="{{ url_for('index') }}">全通联考系统</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        {% if current_user.is_authenticated and not current_user.is_admin %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">考生管理</a>
+                            <ul class="dropdown-menu shadow-sm" aria-labelledby="navbarDropdownMenuLink">
+                                <li><a class="dropdown-item" href="{{ url_for('import_students') }}">从表格导入</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('new_student') }}">新增单个考生</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('search_student') }}">编辑考生信息</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('student_list') }}">已导入考生列表</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">教师管理</a>
+                            <ul class="dropdown-menu shadow-sm" aria-labelledby="navbarDropdownMenuLink">
+                                <li><a class="dropdown-item" href="{{ url_for('import_teachers') }}">从表格导入</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('search_teacher') }}">编辑教师信息</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('teacher_list') }}">已导入教师列表</a></li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                        {% if current_user.is_admin %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">系统初始化</a>
+                            <ul class="dropdown-menu shadow-sm" aria-labelledby="navbarDropdownMenuLink">
+                                <li><a class="dropdown-item" href="{{ url_for('import_users') }}">导入学校用户</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form action="{{ url_for('delete_all_students') }}" method="post" class="px-3 py-1">
+                                        <button type="submit" class="btn btn-danger btn-sm w-100" onclick="return confirm('确定要删除所有考生信息吗?这个操作无法撤销!')">删除所有考生</button>
+                                    </form>
+                                </li>
+                                <li>
+                                    <form action="{{ url_for('delete_all_teachers') }}" method="post" class="px-3 py-1">
+                                        <button type="submit" class="btn btn-danger btn-sm w-100" onclick="return confirm('确定要删除所有教师信息吗?这个操作无法撤销!')">删除所有教师</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                        {% if current_user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">数据统计与导出</a>
+                            <ul class="dropdown-menu shadow-sm" aria-labelledby="navbarDropdownMenuLink">
+                                <li><a class="dropdown-item" href="{{ url_for('student_stats') }}">考生统计与导出</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('teacher_stats') }}">教师统计与导出</a></li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                    </ul>
+                    {% if current_user.is_authenticated %}
+                    <div class="d-flex align-items-center">
+                        <span class="me-3">{{ current_user.username }}</span>
+                        <a href="{{ url_for('logout') }}" class="btn btn-outline-primary btn-sm">登出</a>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
-            {% if current_user.is_admin %}
-              <span class="navbar-text" >
-                欢迎管理员: {{ current_user.username }}, <a class="text-decoration-none" href="{{ url_for('logout') }}">登出</a>
-              </span>
-              {% elif current_user.is_authenticated %}
-              <span class="navbar-text">
-                欢迎: {{ current_user.username }}, <a class="text-decoration-none" href="{{ url_for('logout') }}">登出</a>
-              </span>
-            {% endif %}
-          </div>
-      </nav>
-      {% endblock %}
+        </nav>
+        {% endblock %}
 
-      {% block content %}
-      <div class="container my-4">
-          {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-              {% for category, message in messages %}
-                {% if category == 'error' %}
-                <div class="alert alert-danger py-3 px-3 my-3 mx-3" role="alert">{{ message }}</div>
-                {% else %}
-                <div class="alert alert-info py-3 px-3 my-3 mx-3" role="alert">{{ message }}</div>
+        {% block content %}
+        <div class="container py-4">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
                 {% endif %}
-              {% endfor %}
-          {% endif %}
-          {% endwith %}
+            {% endwith %}
+            {% block app_content %}{% endblock %}
+        </div>
+        {% endblock %}
 
-          {# application content needs to be provided in the content block #}
-          {% block app_content %}
-          {% endblock %}
-      </div>
-      {% endblock %}
+        {% block scripts %}
+            {{ bootstrap.load_js() }}
+        {% endblock %}
 
-      <div class="container">
-        <footer class="py-3 my-4">
-          <p class="text-center text-muted">© 2024 由 <a href="https://claude.ai/" class="text-decoration-none">Claude</a> 指导 <a href="https://hong.im" class="text-decoration-none">Hong</a> 实现， <a href="https://flask.palletsprojects.com/" class="text-decoration-none">Flask</a> 和 <a href="https://getbootstrap.com/" class="text-decoration-none">Bootstrap</a> 强力驱动</p>
-        </footer>
-      </div>
-
-      {% block scripts %}
-          <!-- Optional JavaScript -->
-          {{ bootstrap.load_js() }}
-      {% endblock %}
+        <div class="container">
+            <footer class="py-3 my-4">
+                <p class="text-center text-muted">2024 由 <a href="https://claude.ai/" class="text-decoration-none">Claude</a> 指导 <a href="https://hong.im" class="text-decoration-none">Hong</a> 实现， <a href="https://flask.palletsprojects.com/" class="text-decoration-none">Flask</a> 和 <a href="https://getbootstrap.com/" class="text-decoration-none">Bootstrap</a> 强力驱动</p>
+            </footer>
+        </div>
     </body>
 </html>

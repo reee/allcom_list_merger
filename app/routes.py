@@ -7,7 +7,7 @@ import pandas as pd
 from sqlalchemy import func
 from app import app, db
 from app.auth import admin_required
-from app.forms import EditStudentForm, EditTeacherForm, ImportStudentsForm, ImportTeachersForm, ImportUsersForm, LoginForm
+from app.forms import EditStudentForm, EditTeacherForm, ImportStudentsForm, ImportTeachersForm, ImportUsersForm, LoginForm, SearchStudentForm, SearchTeacherForm
 from app.models import Student, Teacher, User
 
 from app.log_utils import logger
@@ -56,12 +56,43 @@ def admin_panel():
             db.session.delete(user)
             db.session.commit()
             flash('用户已删除', 'success')
+        elif request.form.get('action') == 'delete_grade_students':
+            grade_name = request.form.get('grade_name')
+            students = Student.query.filter_by(grade_name=grade_name).all()
+            for student in students:
+                db.session.delete(student)
+            db.session.commit()
+            flash(f'已删除 {grade_name} 的所有学生', 'success')
+        elif request.form.get('action') == 'delete_grade_teachers':
+            grade_name = request.form.get('grade_name')
+            teachers = Teacher.query.filter_by(teaching_grade=grade_name).all()
+            for teacher in teachers:
+                db.session.delete(teacher)
+            db.session.commit()
+            flash(f'已删除 {grade_name} 的所有教师', 'success')
 
     users = User.query.filter_by(is_admin=False).order_by(User.school_name).all()
-    return render_template('admin_panel.html', users=users)
+    
+    # 获取所有学届
+    grades = db.session.query(User.grade_name).filter_by(is_admin=False).distinct().all()
+    grades = [grade[0] for grade in grades if grade[0]]  # 移除空值
+    
+    # 获取每个学届的学生和教师数量
+    grade_stats = []
+    for grade in grades:
+        student_count = Student.query.filter_by(grade_name=grade).count()
+        teacher_count = Teacher.query.filter_by(teaching_grade=grade).count()
+        grade_stats.append({
+            'grade_name': grade,
+            'student_count': student_count,
+            'teacher_count': teacher_count
+        })
+    
+    return render_template('admin_panel.html', 
+                         users=users, 
+                         grade_stats=grade_stats)
 
-
-@app.route('/admin/import_users', methods=['GET', 'POST'])
+@app.route('/import_users', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def import_users():
@@ -75,7 +106,7 @@ def import_users():
         # 读取Excel数据
         df = pd.read_excel(file)
         
-        expected_columns = ['用户名', '密码', '学届', '学校简称']
+        expected_columns = ['用户名', '密码', '学届', '学校简称', '学校代码']
         columns = df.columns.tolist()
         if columns != expected_columns:
             missing_columns = set(expected_columns) - set(columns)
@@ -102,10 +133,21 @@ def import_users():
 
         # 导入新用户
         for _, row in df.iterrows():
+            # 验证学校代码
+            try:
+                school_code = int(str(row['学校代码']).strip())
+                if school_code < 1 or school_code > 999:
+                    flash('学校代码必须是1-3位的正整数', 'error')
+                    return redirect(url_for('import_users'))
+            except ValueError:
+                flash('学校代码必须是数字', 'error')
+                return redirect(url_for('import_users'))
+
             user = User(
                 username=row['用户名'].strip(), 
                 grade_name=row['学届'].strip(), 
-                school_name=row['学校简称'].strip()
+                school_name=row['学校简称'].strip(),
+                school_code=school_code
                 )
             user.set_password(str(row['密码']).strip())
             db.session.add(user)
@@ -128,17 +170,15 @@ def import_students():
         # 读取Excel数据
         df = pd.read_excel(file)
 
-        expected_columns = ['学校代码', '学校名称', '学届', '班级代码', '姓名', '学籍号', '考生类型1', '考生类型2', '考号', '科类属性']
-        columns = df.columns.tolist()
-        if sorted(columns) != sorted(expected_columns):
-            missing_columns = set(expected_columns) - set(columns)
-            extra_columns = set(columns) - set(expected_columns)
-            error_message = ''
-            if missing_columns:
-                error_message += f"缺少列: {', '.join(missing_columns)}\n"
-            if extra_columns:
-                error_message += f"多余列: {', '.join(extra_columns)}\n"
-            flash(error_message, 'error')
+        # 根据是否分科确定必需列
+        required_columns = ['姓名', '考号', '学校名称', '学届']
+        if not form.not_divided.data:  # 如果已分科，则需要考生类型列
+            required_columns.append('考生类型')
+
+        # 检查必需列是否存在
+        missing_columns = set(required_columns) - set(df.columns)
+        if missing_columns:
+            flash(f"缺少必需列: {', '.join(missing_columns)}", 'error')
             return redirect(url_for('import_students'))
         
         # 检查是否存在考号重复学生
@@ -158,25 +198,12 @@ def import_students():
 
         valid_exam_types = ["物化生", "物化政", "物化地", "物生地", "物生政", "物地政", 
                           "历化政", "历化生", "历化地", "历生政", "历生地", "历政地"]
-        valid_subject_types = ["物理类", "历史类"]        
 
         # 导入学生
         for index, row in df.iterrows():
             # 检查学校名称
             if str(row['学校名称']).strip() != current_user.school_name:
                 flash(f"存在非本校学生或学校名称缺失或学校名称不匹配,请修正后重新导入", 'error')
-                return redirect(url_for('import_students'))
-
-            # 检查考生类型1
-            exam_type1 = str(row['考生类型1']).strip() if pd.notna(row['考生类型1']) else ''
-            if exam_type1 and exam_type1 not in valid_exam_types:
-                flash(f"存在考生 考生类型1 不正确,请修正后重新导入", 'error')
-                return redirect(url_for('import_students'))
-            
-            # 检查考生类型2
-            exam_type2 = str(row['考生类型2']).strip() if pd.notna(row['考生类型2']) else ''
-            if exam_type2 and exam_type2 not in valid_exam_types:
-                flash(f"存在考生 考生类型2 不正确,请修正后重新导入", 'error')
                 return redirect(url_for('import_students'))
 
             # 检查学届
@@ -190,45 +217,49 @@ def import_students():
                 flash(f"存在考生考号缺失或位数不正确,请修正后重新导入", 'error')
                 return redirect(url_for('import_students'))
 
-            # 检查班级代码
-            class_name = str(row['班级代码']).strip()
-            if len(class_name) != 3:
-                flash(f"存在考生班级代码缺失或位数不正确,请修正后重新导入", 'error')
+            # 生成班级代码（学校代码 + 考号第3-4位）
+            try:
+                class_code = str(current_user.school_code).zfill(1) + exam_no[2:4]
+                if len(class_code) != 3:
+                    flash(f"生成的班级代码不是3位数，请检查学校代码和考号格式", 'error')
+                    return redirect(url_for('import_students'))
+            except Exception as e:
+                flash(f"生成班级代码时出错：{str(e)}", 'error')
                 return redirect(url_for('import_students'))
 
-            # 检查科类属性
-            subject_type = str(row['科类属性']).strip() if pd.notna(row['科类属性']) else ''
-            if subject_type and subject_type not in valid_subject_types:
-                flash(f"存在考生 科类属性 不正确,请修正后重新导入", 'error')
-                return redirect(url_for('import_students'))
-            
-            # 处理学籍号
-            student_id = str(row['学籍号']).strip() if pd.notna(row['学籍号']) else ''
-            
+            # 处理考生类型和科类属性
+            exam_type1 = ''
+            subject_type = ''
+            if not form.not_divided.data:  # 如果已分科
+                exam_type1 = str(row['考生类型']).strip()
+                if exam_type1 not in valid_exam_types:
+                    flash(f"存在考生类型不正确,请修正后重新导入", 'error')
+                    return redirect(url_for('import_students'))
+                # 根据考生类型判断科类属性
+                subject_type = "物理类" if exam_type1.startswith('物') else "历史类"
+
+            # 创建学生记录
             student = Student(
-                school_code=str(row['学校代码']).strip(), 
-                school_name=str(row['学校名称']).strip(),
-                grade_name=str(row['学届']).strip(),
-                class_name=class_name,
+                school_code=current_user.school_code,
+                school_name=current_user.school_name,
+                grade_name=current_user.grade_name,
+                class_name=class_code,
                 name=str(row['姓名']).strip(),
-                student_id=student_id,
-                exam_type=exam_type1,
-                exam_type1=exam_type2,
+                student_id='',  # 学籍号可为空
+                exam_type=exam_type1,  # 考生类型1
+                exam_type1='',  # 考生类型2可为空
                 exam_no=exam_no,
                 subject_type=subject_type
             )
             db.session.add(student)
-        
+
         try:
             db.session.commit()
-            flash('本校考生信息导入成功', 'info')
-        except IntegrityError as e:
+            flash('考生导入成功', 'success')
+        except Exception as e:
             db.session.rollback()
-            error_info = str(e.orig)
-            if 'UNIQUE constraint failed' in error_info:
-                flash('导入学生考号与数据库已有考号重复，请检查相关数据', 'error')
-            else:
-                flash('发生未知错误，请联系管理员！', 'error')
+            flash(f'导入失败: {str(e)}', 'error')
+            
         return redirect(url_for('import_students'))
         
     return render_template('import_students.html', form=form)
@@ -246,68 +277,103 @@ def import_teachers():
         # 读取Excel数据
         df = pd.read_excel(file)
 
-        expected_columns = ['编码', '姓名', '单位', '任教学届', '密码', '任教学科', '角色', '性别', '是否启用']
-        columns = df.columns.tolist()
-        if columns.sort() != expected_columns.sort():
-            missing_columns = set(expected_columns) - set(columns)
-            extra_columns = set(columns) - set(expected_columns)
-            error_message = ''
-            if missing_columns:
-                error_message += f"缺少列: {', '.join(missing_columns)}\n"
-            if extra_columns:
-                error_message += f"多余列: {', '.join(extra_columns)}\n"
-            flash(error_message, 'error')
-            return redirect(url_for('import_students'))
-        
+        # 检查必需列
+        required_columns = ['姓名', '身份证号', '任教学科', '学校名称', '任教学届']
+        missing_columns = set(required_columns) - set(df.columns)
+        if missing_columns:
+            flash(f"缺少必需列: {', '.join(missing_columns)}", 'error')
+            return redirect(url_for('import_teachers'))
+
         if form.replace.data:
-            # 清理现有学生
+            # 清理现有教师
             existing_teachers = Teacher.query.filter_by(school_name=current_user.school_name).all()
             for teacher in existing_teachers:
                 db.session.delete(teacher)
             db.session.commit()
 
         valid_subjects = ['语文', '数学', '英语', '物理', '化学', '生物', '政治', '历史', '地理']
-        valid_roles = ["任课教师", "科组长"]
 
-        # 检查编码字段是否有重复，一般这里重复是因为存在跨年级的情况
-        if not df["编码"].is_unique:
-            flash(f"教师编码存在重复值，请删除重复的教师后重新导入", 'error')
+        # 检查身份证号是否有重复
+        if not df["身份证号"].is_unique:
+            flash(f"存在重复的身份证号，请检查后重新导入", 'error')
             return redirect(url_for('import_teachers'))
 
         # 导入教师
         for index, row in df.iterrows():
             # 检查学校名称
-            if row['单位'] != current_user.school_name:
+            if str(row['学校名称']).strip() != current_user.school_name:
                 flash(f"存在非本校教师或学校名称缺失或不匹配,请修正后重新导入", 'error')
                 return redirect(url_for('import_teachers'))
 
-            # 检查任教学科
-            if row['任教学科'] and row['任教学科'] not in valid_subjects:
-                flash(f"存在教师任教学科不正确,请修正后重新导入", 'error')
-                return redirect(url_for('import_teachers'))
-            
-            # 检查角色
-            if row['角色'] and row['角色'] not in valid_roles:
-                flash(f"存在教师角色不正确,请修正后重新导入", 'error')
+            # 检查身份证号格式
+            id_number = str(row['身份证号']).strip()
+            if not is_valid_id_number(id_number):
+                flash(f"存在无效的身份证号，请检查后重新导入", 'error')
                 return redirect(url_for('import_teachers'))
 
+            # 检查任教学科
+            subject = str(row['任教学科']).strip()
+            if subject not in valid_subjects:
+                flash(f"存在教师任教学科不正确,请修正后重新导入", 'error')
+                return redirect(url_for('import_teachers'))
+
+            # 从身份证号获取性别
+            gender = '男' if int(id_number[-2]) % 2 == 1 else '女'
+
             teacher = Teacher(
-                code=row['编码'], 
-                name=row['姓名'], 
-                school_name=row['单位'],
-                teaching_grade=row['任教学届'],
-                password=row['密码'],
-                subjects=row['任教学科'],
-                role=row['角色'],
-                gender=row['性别'],
-                enabled=True if row['是否启用'] == '是' else False
+                code=id_number,  # 使用身份证号作为编码
+                name=str(row['姓名']).strip(),
+                school_name=str(row['学校名称']).strip(),
+                teaching_grade=str(row['任教学届']).strip(),
+                password=id_number[-6:],  # 使用身份证号后6位作为密码
+                subjects=subject,
+                role='任课教师',  # 默认角色
+                gender=gender,  # 根据身份证号判断性别
+                enabled=True  # 默认启用
             )
             db.session.add(teacher)
-        db.session.commit()
-        flash('本校阅卷教师信息导入成功', 'info')
+
+        try:
+            db.session.commit()
+            flash('教师信息导入成功', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'导入失败: {str(e)}', 'error')
+            
         return redirect(url_for('import_teachers'))
         
     return render_template('import_teachers.html', form=form)
+
+def is_valid_id_number(id_number):
+    """验证身份证号是否合法"""
+    if len(id_number) != 18:
+        return False
+    
+    # 检查前17位是否都是数字
+    if not id_number[:-1].isdigit():
+        return False
+    
+    # 检查最后一位是否是数字或X
+    if not (id_number[-1].isdigit() or id_number[-1].upper() == 'X'):
+        return False
+    
+    # 检查出生日期是否合法
+    try:
+        year = int(id_number[6:10])
+        month = int(id_number[10:12])
+        day = int(id_number[12:14])
+        
+        # 简单的日期验证
+        if year < 1900 or year > 2100:
+            return False
+        if month < 1 or month > 12:
+            return False
+        if day < 1 or day > 31:
+            return False
+    except:
+        return False
+    
+    return True
 
 @app.route('/user', methods=['GET', 'POST'])
 @login_required
@@ -411,8 +477,13 @@ def export_students():
     # 管理员导出所有学生，非管理员只导出本学届学生
     if current_user.grade_name:
         students = Student.query.filter_by(grade_name=current_user.grade_name)
+        sample_student = students.first()
+        has_exam_type = sample_student and sample_student.exam_type
     else:
         students = Student.query.all()
+        has_exam_type = False
+
+    # 基础数据
     data = [{
         '学校代码': student.school_code,
         '学校名称': student.school_name,
@@ -428,11 +499,29 @@ def export_students():
 
     df = pd.DataFrame(data)
     output = io.BytesIO()
+
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df.to_excel(writer, sheet_name='Students', index=False)
+        df.to_excel(writer, sheet_name='全部学生', index=False)
+
+        # 如果已分科，则按科目分类导出
+        if has_exam_type:
+            # 创建各科目工作表
+            physics_df = df[df['考生类型1'].str.contains('物', na=False)]
+            chemistry_df = df[df['考生类型1'].str.contains('化', na=False)]
+            biology_df = df[df['考生类型1'].str.contains('生', na=False)]
+            history_df = df[df['考生类型1'].str.contains('历', na=False)]
+            politics_df = df[df['考生类型1'].str.contains('政', na=False)]
+            geography_df = df[df['考生类型1'].str.contains('地', na=False)]
+
+            # 导出各科目工作表
+            physics_df.to_excel(writer, sheet_name='物理', index=False)
+            chemistry_df.to_excel(writer, sheet_name='化学', index=False)
+            biology_df.to_excel(writer, sheet_name='生物', index=False)
+            history_df.to_excel(writer, sheet_name='历史', index=False)
+            politics_df.to_excel(writer, sheet_name='政治', index=False)
+            geography_df.to_excel(writer, sheet_name='地理', index=False)
 
     output.seek(0)
-
     return send_file(
         output,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -470,20 +559,73 @@ def student_stats():
     # 获取所有学校名称并去重
     school_names = set([user.school_name for user in User.query.filter(User.school_name != '').all()])
 
-    # 计算每个学校的学生人数
+    # 检查当前学届是否已分科
+    if current_user.grade_name:
+        sample_student = Student.query.filter_by(grade_name=current_user.grade_name).first()
+        has_exam_type = sample_student and sample_student.exam_type
+    else:
+        has_exam_type = False
+
+    # 计算每个学校的学生统计信息
     student_stats = []
+    total_stats = {
+        'total': 0,
+        'physics': 0,
+        'chemistry': 0,
+        'biology': 0,
+        'history': 0,
+        'politics': 0,
+        'geography': 0
+    }
+
     for school_name in school_names:
         if current_user.grade_name:
-            student_count = Student.query.filter_by(school_name=school_name, grade_name=current_user.grade_name).count()
+            students = Student.query.filter_by(school_name=school_name, grade_name=current_user.grade_name)
         else:
-            student_count = Student.query.filter_by(school_name=school_name).count()
+            students = Student.query.filter_by(school_name=school_name)
 
-        student_stats.append({
+        student_count = students.count()
+        school_stat = {
             'school_name': school_name,
-            'student_count': student_count
-        })
+            'student_count': student_count,
+            'physics_count': 0,
+            'chemistry_count': 0,
+            'biology_count': 0,
+            'history_count': 0,
+            'politics_count': 0,
+            'geography_count': 0
+        }
 
-    return render_template('student_stats.html', student_stats=student_stats)
+        if has_exam_type:
+            # 统计各科目人数
+            for student in students:
+                if student.exam_type:
+                    if '物' in student.exam_type:
+                        school_stat['physics_count'] += 1
+                        total_stats['physics'] += 1
+                    if '化' in student.exam_type:
+                        school_stat['chemistry_count'] += 1
+                        total_stats['chemistry'] += 1
+                    if '生' in student.exam_type:
+                        school_stat['biology_count'] += 1
+                        total_stats['biology'] += 1
+                    if '历' in student.exam_type:
+                        school_stat['history_count'] += 1
+                        total_stats['history'] += 1
+                    if '政' in student.exam_type:
+                        school_stat['politics_count'] += 1
+                        total_stats['politics'] += 1
+                    if '地' in student.exam_type:
+                        school_stat['geography_count'] += 1
+                        total_stats['geography'] += 1
+
+        student_stats.append(school_stat)
+        total_stats['total'] += student_count
+
+    return render_template('student_stats.html', 
+                         student_stats=student_stats, 
+                         total_stats=total_stats,
+                         has_exam_type=has_exam_type)
 
 @app.route('/teacher_stats', methods=['GET'])
 @login_required
@@ -618,3 +760,40 @@ def delete_teacher(teacher_id):
     db.session.commit()
     flash('学生信息已删除')
     return redirect(url_for('teacher_list'))
+
+@app.route('/search_student', methods=['GET', 'POST'])
+@login_required
+def search_student():
+    form = SearchStudentForm()
+    students = []
+    
+    if form.validate_on_submit():
+        search_term = form.name.data
+        students = Student.query.filter(
+            Student.name.like(f'%{search_term}%'),
+            Student.school_name == current_user.school_name,
+            Student.grade_name == current_user.grade_name
+        ).all()
+        
+        if not students:
+            flash('未找到匹配的学生', 'info')
+    
+    return render_template('search_student.html', form=form, students=students)
+
+@app.route('/search_teacher', methods=['GET', 'POST'])
+@login_required
+def search_teacher():
+    form = SearchTeacherForm()
+    teachers = []
+    
+    if form.validate_on_submit():
+        search_term = form.name.data
+        teachers = Teacher.query.filter(
+            Teacher.name.like(f'%{search_term}%'),
+            Teacher.school_name == current_user.school_name
+        ).all()
+        
+        if not teachers:
+            flash('未找到匹配的教师', 'info')
+    
+    return render_template('search_teacher.html', form=form, teachers=teachers)

@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block app_content %}
+<div class="container py-4">
+    <!-- 搜索卡片 -->
+    <div class="p-5 mb-4 bg-light rounded-3">
+        <div class="container-fluid py-3">
+            <h2 class="display-6 fw-bold mb-4">搜索教师</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    {% from 'bootstrap5/form.html' import render_form %}
+                    {{ render_form(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if teachers %}
+    <!-- 搜索结果 -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="card-title mb-0 fw-bold">搜索结果</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>姓名</th>
+                            <th>编码</th>
+                            <th>任教学科</th>
+                            <th>任教学届</th>
+                            <th>角色</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for teacher in teachers %}
+                        <tr>
+                            <td>{{ teacher.name }}</td>
+                            <td><code>{{ teacher.code }}</code></td>
+                            <td>{{ teacher.subjects }}</td>
+                            <td>{{ teacher.teaching_grade }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'primary' if teacher.role == '科组长' else 'secondary' }}">
+                                    {{ teacher.role }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if teacher.enabled else 'danger' }}">
+                                    {{ '启用' if teacher.enabled else '禁用' }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('edit_teacher', teacher_id=teacher.id) }}" 
+                                   class="btn btn-primary btn-sm">
+                                    <i class="bi bi-pencil"></i> 编辑
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

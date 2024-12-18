@@ -1,22 +1,40 @@
 {% extends 'base.html' %}
 
 {% block app_content %}
-<h2>导入本校本学届考生</h2>
-<div class="row">
-    <div>
-        {% from 'bootstrap5/form.html' import render_form %}
-        {{ render_form(form) }} 
+<div class="container">
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4 class="card-title">导入考生名单</h4>
+            <p>当前账号仅允许导入<strong class="text-primary">{{ current_user.school_name }}</strong>-<strong class="text-primary">{{ current_user.grade_name }}</strong>考生信息。</p>
+            {% from 'bootstrap5/form.html' import render_form %}
+            {{ render_form(form) }}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">文档要求说明</h4>
+            <ul class="list-group">
+                <li class="list-group-item">1. 仅支持xlsx文件，存在多个工作表的，<strong class="text-primary">仅会读取第一个工作表。</strong></li>
+                <li class="list-group-item">2. 文件必须包含以下列:<strong class="text-primary">姓名、考号、学校名称、学届</strong>。</li>
+                <li class="list-group-item">3. 若"本期尚未分科"未勾选，则还需包含<strong class="text-primary">考生类型</strong>列，其值必须为以下之一：
+                    <br>"物化生、物化政、物化地、物生地、物生政、物地政、历化政、历化生、历化地、历生政、历生地、历政地"</li>
+                <li class="list-group-item">4. 系统将自动处理以下信息：
+                    <ul>
+                        <li>学校代码：使用当前用户的学校代码</li>
+                        <li>班级代码：由学校代码与考号第3-4位数字组合生成的3位数字</li>
+                        <li>科类属性：根据考生类型自动判断（以"物"开头为物理类，以"历"开头为历史类）</li>
+                    </ul>
+                </li>
+                <li class="list-group-item">5. 数据格式要求：
+                    <ul>
+                        <li>考号必须为<strong class="text-primary">10位</strong>数字</li>
+                        <li>学校名称必须与当前用户学校名称一致</li>
+                        <li>学届必须与当前用户学届一致</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
     </div>
 </div>
-
-<h5 class="card-title py-2">文档相关要求：</h5>
-<ul class="list-group py-2">
-    <li class="list-group-item">1. 仅支持xlsx文件，存在多个工作表的，<strong class="text-primary">仅会读取第一个工作表。</strong></li>
-    <li class="list-group-item">2. 文件需且仅需包含以下10列：<strong class="text-primary">"学校代码、学校名称、学届、班级代码、姓名、学籍号、考生类型1、考生类型2、考号、科类属性"。</strong></li>
-    <li class="list-group-item">3. 当前账号仅允许导入学校为<strong class="text-primary">{{ current_user.school_name }}</strong>，学届为<strong class="text-primary">{{ current_user.grade_name }}</strong>的考生。</strong></li>
-    <li class="list-group-item">4. <strong class="text-primary">"学籍号"、"考生类型2"可留空，高一上期时，"考生类型1"、"科类属性"可留空。</strong>，其他不可留空。</li>
-    <li class="list-group-item">5. "考生类型1"和"考生类型2"只能为如下12种中一种：<strong class="text-primary">"物化生、物化政、物化地、物生地、物生政、物地政、历化政、历化生、历化地、历生政、历生地、历政地"。</strong></li>
-    <li class="list-group-item">6. 考号位数只能为<strong class="text-primary">10位</strong>数，班级代码只能为<strong class="text-primary">3位</strong>数，科类属性只能取<strong class="text-primary">"物理类"或"历史类"。</strong></li>
-</ul>
-
 {% endblock %}

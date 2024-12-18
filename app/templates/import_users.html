@@ -1,17 +1,31 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block app_content %}
-    <h1 py-2>导入用户</h1>
-    <div class="row py-2">
-        <div>
+<div class="container">
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4 class="card-title">导入学校用户</h4>
             {% from 'bootstrap5/form.html' import render_form %}
-            {{ render_form(form) }} 
+            {{ render_form(form) }}
         </div>
     </div>
-    <h5 class="card-title py-2">文档格式要求：</h5>
-    <ul class="list-group py-2">
-        <li class="list-group-item">1. 仅支持xlsx文件，且文件仅需包含4列，列名必须是<strong>"用户名"、"密码"、"学届"、"学校简称"</strong>。</li>
-        <li class="list-group-item">2. 建议按<strong>"高20xx届"的形式命名学届。</strong>。</li>
-        <li class="list-group-item">3. 学校简称只能是下列之一：<strong>梁平中学、永川中学、潼南中学、涪陵五中、开州中学、万州中学、丰都中学。</strong></li>
-    </ul>
+
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">文档要求说明</h4>
+            <ul class="list-group">
+                <li class="list-group-item">1. 仅支持xlsx文件，存在多个工作表的，<strong class="text-primary">仅会读取第一个工作表。</strong></li>
+                <li class="list-group-item">2. 文件必须包含以下列：<strong class="text-primary">用户名、密码、学届、学校简称、学校代码</strong>。</li>
+                <li class="list-group-item">3. 数据要求：
+                    <ul>
+                        <li>用户名：不能重复</li>
+                        <li>学校代码：必须是1-3位的正整数（1-999之间）</li>
+                        <li>所有字段都不能为空</li>
+                    </ul>
+                </li>
+                <li class="list-group-item">4. 若勾选"清空现有用户"，系统会先删除所有非管理员用户后再导入。</li>
+            </ul>
+        </div>
+    </div>
+</div>
 {% endblock %}

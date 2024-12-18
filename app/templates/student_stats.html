@@ -13,7 +13,15 @@
             <thead>
                 <tr>
                     <th>学校名称</th>
-                    <th>已导入考生人数</th>
+                    <th>总人数</th>
+                    {% if has_exam_type %}
+                    <th>物理</th>
+                    <th>化学</th>
+                    <th>生物</th>
+                    <th>历史</th>
+                    <th>政治</th>
+                    <th>地理</th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
@@ -21,10 +29,30 @@
                 <tr>
                     <td>{{ stat.school_name }}</td>
                     <td>{{ stat.student_count }}</td>
+                    {% if has_exam_type %}
+                    <td>{{ stat.physics_count }}</td>
+                    <td>{{ stat.chemistry_count }}</td>
+                    <td>{{ stat.biology_count }}</td>
+                    <td>{{ stat.history_count }}</td>
+                    <td>{{ stat.politics_count }}</td>
+                    <td>{{ stat.geography_count }}</td>
+                    {% endif %}
                 </tr>
                 {% endfor %}
+                <tr>
+                    <td><strong>总计</strong></td>
+                    <td><strong>{{ total_stats.total }}</strong></td>
+                    {% if has_exam_type %}
+                    <td><strong>{{ total_stats.physics }}</strong></td>
+                    <td><strong>{{ total_stats.chemistry }}</strong></td>
+                    <td><strong>{{ total_stats.biology }}</strong></td>
+                    <td><strong>{{ total_stats.history }}</strong></td>
+                    <td><strong>{{ total_stats.politics }}</strong></td>
+                    <td><strong>{{ total_stats.geography }}</strong></td>
+                    {% endif %}
+                </tr>
             </tbody>
         </table>
     </div>
-    <a href="{{ url_for('export_students') }}" class="btn btn-primary" role="button" aria-pressed="true">导出所有考生</a>
+    <a href="{{ url_for('export_students') }}" class="btn btn-primary" role="button" aria-pressed="true">导出考生名单</a>
 {% endblock %}

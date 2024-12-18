@@ -17,11 +17,12 @@ class ImportUsersForm(FlaskForm):
     submit = SubmitField('上传')
 
 class ImportStudentsForm(FlaskForm):
-    upload = FileField('请选择本校考生名单上传导入', validators=[
+    upload = FileField('请选择对应名单上传导入', validators=[
         FileRequired(),
         FileAllowed(['xlsx'], '只允许上传xlsx文件!')
     ])
     replace = BooleanField('清除本校本学届现有考生后再导入')
+    not_divided = BooleanField('本次考试学生尚未分科')
     submit = SubmitField('上传')
 
 class EditStudentForm(FlaskForm):
@@ -55,6 +56,14 @@ class EditStudentForm(FlaskForm):
     exam_no = StringField('考号', validators=[DataRequired(), Length(min=10, max=10)])
     submit = SubmitField('提交')
 
+class SearchStudentForm(FlaskForm):
+    name = StringField('学生姓名', validators=[DataRequired()])
+    submit = SubmitField('搜索')
+
+class SearchTeacherForm(FlaskForm):
+    name = StringField('教师姓名', validators=[DataRequired()])
+    submit = SubmitField('搜索')
+
 class EditTeacherForm(FlaskForm):
     code = StringField('编码', validators=[DataRequired()])
     name = StringField('姓名', validators=[DataRequired()]) 
@@ -68,9 +77,9 @@ class EditTeacherForm(FlaskForm):
     submit = SubmitField('提交')
 
 class ImportTeachersForm(FlaskForm):
-    upload = FileField('请选择本校阅卷教师名单上传导入', validators=[
+    upload = FileField('请选择对应名单上传导入', validators=[
         FileRequired(),
         FileAllowed(['xlsx'], '只允许上传xlsx文件!')
     ])
-    replace = BooleanField('清除本校现有阅卷教师后再导入')
+    replace = BooleanField('清除本校现有教师后再导入')
     submit = SubmitField('上传')

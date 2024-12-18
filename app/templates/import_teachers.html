@@ -1,18 +1,40 @@
 {% extends 'base.html' %}
 
 {% block app_content %}
-<h2>导入本校老师</h2>
-<div class="row">
-    <div>
-        {% from 'bootstrap5/form.html' import render_form %}
-        {{ render_form(form) }} 
+<div class="container">
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4 class="card-title">导入教师名单</h4>
+            <p>当前账号仅允许导入<strong class="text-primary">{{ current_user.school_name }}</strong>-<strong class="text-primary">{{ current_user.grade_name }}</strong>教师信息。</p>
+            {% from 'bootstrap5/form.html' import render_form %}
+            {{ render_form(form) }}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">文档要求说明</h4>
+            <ul class="list-group">
+                <li class="list-group-item">1. 仅支持xlsx文件，存在多个工作表的，<strong class="text-primary">仅会读取第一个工作表。</strong></li>
+                <li class="list-group-item">2. 文件必须包含以下列：<strong class="text-primary">姓名、身份证号、任教学科、学校名称、任教学届</strong>。</li>
+                <li class="list-group-item">3. 系统将自动处理以下信息：
+                    <ul>
+                        <li>编码：使用身份证号</li>
+                        <li>密码：使用身份证号后6位</li>
+                        <li>角色：默认为"任课教师"</li>
+                        <li>性别：根据身份证号自动判断</li>
+                        <li>是否启用：默认为启用状态</li>
+                    </ul>
+                </li>
+                <li class="list-group-item">4. 数据要求：
+                    <ul>
+                        <li>身份证号：必须是合法的18位身份证号码</li>
+                        <li>学校名称：必须与当前用户学校名称一致</li>
+                        <li>任教学科：必须为以下之一：语文、数学、英语、物理、化学、生物、政治、历史、地理</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
     </div>
 </div>
-<h5 class="card-title py-2">文档相关要求：</h5>
-<ul class="list-group py-2">
-    <li class="list-group-item">1. 仅支持xlsx文件，存在多个工作表的，仅会读取第一个工作表。</li>
-    <li class="list-group-item">2. 文件需且仅需包含以下8列：<strong>"编码, 姓名, 单位, 任教学届, 密码, 任教学科, 角色, 性别, 是否启用"。</strong></li>
-    <li class="list-group-item">3. “任教学科”允许留空，但是如果填写了的话会进行正确性校验。</li>
-    <li class="list-group-item">4. “角色”允许留空或<strong>"任课教师"或"科组长"</strong>。</li>
-</ul>
 {% endblock %}
