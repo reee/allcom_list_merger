@@ -633,16 +633,81 @@ def teacher_stats():
     # 获取所有学校名称并去重
     school_names = set([user.school_name for user in User.query.filter(User.school_name != '').all()])
 
-    # 计算每个学校的学生人数
+    # 初始化总计数据
+    total_stats = {
+        'total': 0,
+        'chinese': 0,
+        'math': 0,
+        'english': 0,
+        'physics': 0,
+        'chemistry': 0,
+        'biology': 0,
+        'history': 0,
+        'politics': 0,
+        'geography': 0
+    }
+
+    # 计算每个学校的教师统计信息
     teacher_stats = []
     for school_name in school_names:
-        teacher_count = Teacher.query.filter_by(school_name=school_name).count()
-        teacher_stats.append({
-            'school_name': school_name,
-            'teacher_count': teacher_count
-        })
+        # 根据当前用户的学届筛选教师
+        if current_user.grade_name:
+            teachers = Teacher.query.filter_by(school_name=school_name, teaching_grade=current_user.grade_name)
+        else:
+            teachers = Teacher.query.filter_by(school_name=school_name)
 
-    return render_template('teacher_stats.html', teacher_stats=teacher_stats)
+        # 初始化学校统计数据
+        school_stat = {
+            'school_name': school_name,
+            'teacher_count': 0,
+            'chinese_count': 0,
+            'math_count': 0,
+            'english_count': 0,
+            'physics_count': 0,
+            'chemistry_count': 0,
+            'biology_count': 0,
+            'history_count': 0,
+            'politics_count': 0,
+            'geography_count': 0
+        }
+
+        # 统计各学科教师人数
+        for teacher in teachers:
+            school_stat['teacher_count'] += 1
+            if teacher.subjects == '语文':
+                school_stat['chinese_count'] += 1
+                total_stats['chinese'] += 1
+            elif teacher.subjects == '数学':
+                school_stat['math_count'] += 1
+                total_stats['math'] += 1
+            elif teacher.subjects == '英语':
+                school_stat['english_count'] += 1
+                total_stats['english'] += 1
+            elif teacher.subjects == '物理':
+                school_stat['physics_count'] += 1
+                total_stats['physics'] += 1
+            elif teacher.subjects == '化学':
+                school_stat['chemistry_count'] += 1
+                total_stats['chemistry'] += 1
+            elif teacher.subjects == '生物':
+                school_stat['biology_count'] += 1
+                total_stats['biology'] += 1
+            elif teacher.subjects == '历史':
+                school_stat['history_count'] += 1
+                total_stats['history'] += 1
+            elif teacher.subjects == '政治':
+                school_stat['politics_count'] += 1
+                total_stats['politics'] += 1
+            elif teacher.subjects == '地理':
+                school_stat['geography_count'] += 1
+                total_stats['geography'] += 1
+
+        teacher_stats.append(school_stat)
+        total_stats['total'] += school_stat['teacher_count']
+
+    return render_template('teacher_stats.html', 
+                         teacher_stats=teacher_stats, 
+                         total_stats=total_stats)
 
 @app.route('/teacher_list')
 def teacher_list():
