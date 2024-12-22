@@ -7,7 +7,7 @@ import pandas as pd
 from sqlalchemy import func
 from app import app, db
 from app.auth import admin_required
-from app.forms import EditStudentForm, EditTeacherForm, ImportStudentsForm, ImportTeachersForm, ImportUsersForm, LoginForm, SearchStudentForm, SearchTeacherForm
+from app.forms import EditStudentForm, EditTeacherForm, ImportStudentsForm, ImportTeachersForm, ImportUsersForm, LoginForm, SearchStudentForm, SearchTeacherForm, NewStudentForm
 from app.models import Student, Teacher, User
 
 from app.log_utils import logger
@@ -228,15 +228,15 @@ def import_students():
                 return redirect(url_for('import_students'))
 
             # 处理考生类型和科类属性
-            exam_type1 = ''
+            exam_type = ''
             subject_type = ''
             if not form.not_divided.data:  # 如果已分科
-                exam_type1 = str(row['考生类型']).strip()
-                if exam_type1 not in valid_exam_types:
+                exam_type = str(row['考生类型']).strip()
+                if exam_type not in valid_exam_types:
                     flash(f"存在考生类型不正确,请修正后重新导入", 'error')
                     return redirect(url_for('import_students'))
                 # 根据考生类型判断科类属性
-                subject_type = "物理类" if exam_type1.startswith('物') else "历史类"
+                subject_type = "物理类" if exam_type.startswith('物') else "历史类"
 
             # 创建学生记录
             student = Student(
@@ -245,9 +245,7 @@ def import_students():
                 grade_name=current_user.grade_name,
                 class_name=class_code,
                 name=str(row['姓名']).strip(),
-                student_id='',  # 学籍号可为空
-                exam_type=exam_type1,  # 考生类型1
-                exam_type1='',  # 考生类型2可为空
+                exam_type=exam_type,
                 exam_no=exam_no,
                 subject_type=subject_type
             )
@@ -395,9 +393,7 @@ def edit_student(student_id):
     form = EditStudentForm()
     if form.validate_on_submit():
         student.name = form.name.data
-        student.student_id = form.student_id.data
         student.exam_type = form.exam_type.data
-        student.exam_type1 = form.exam_type1.data
         student.subject_type = form.subject_type.data
         student.school_code = form.school_code.data
         student.school_name = form.school_name.data
@@ -410,9 +406,7 @@ def edit_student(student_id):
     
     elif request.method == 'GET':
         form.name.data = student.name
-        form.student_id.data = student.student_id
         form.exam_type.data = student.exam_type
-        form.exam_type1.data = student.exam_type1
         form.subject_type.data = student.subject_type
         form.school_code.data = student.school_code
         form.school_name.data = student.school_name
@@ -439,37 +433,93 @@ def delete_student(student_id):
     flash('学生信息已删除')
     return redirect(url_for('student_list'))
 
-@app.route('/student/new', methods=['GET', 'POST'])
+@app.route('/new_student', methods=['GET', 'POST'])
 @login_required
 def new_student():
-    form = EditStudentForm()
-    if form.validate_on_submit():
-
-        if form.school_name.data != current_user.school_name:
-            flash('您无权新增其他学校的学生信息', 'error')
-            return redirect(url_for('new_student'))
-        
-        if form.grade_name.data != current_user.grade_name:
-            flash('您无权新增其他年级的学生信息', 'error')
-            return redirect(url_for('new_student'))    
-
-        student = Student(
-            name=form.name.data,
-            student_id=form.student_id.data,
-            exam_type=form.exam_type.data,
-            exam_type1=form.exam_type1.data,
-            subject_type=form.subject_type.data,
-            school_code=form.school_code.data,
-            class_name=form.class_name.data,
-            grade_name=form.grade_name.data,
-            exam_no=form.exam_no.data,
-            school_name=form.school_name.data
-        )
-        db.session.add(student)
-        db.session.commit()
-        flash('新考生信息已添加', 'info')
+    # 如果是管理员，重定向到学生列表页面
+    if not current_user.grade_name:
+        flash('管理员不能直接添加考生，请使用导入功能。', 'warning')
         return redirect(url_for('student_list'))
-    return render_template('new_student.html', form=form)
+
+    form = NewStudentForm()
+    if form.validate_on_submit():
+        # 如果是确认提交
+        if request.form.get('confirm'):
+            # 从隐藏字段获取数据
+            name = request.form.get('name')
+            exam_no = request.form.get('exam_no')
+            exam_type = request.form.get('exam_type')
+            
+            # 从考号获取班级代码
+            class_name = str(current_user.school_code) + exam_no[2:4]
+            
+            # 根据考生类型判断科类属性
+            subject_type = "物理类" if exam_type.startswith('物') else "历史类" if exam_type else ""
+
+            # 创建新考生
+            student = Student(
+                name=name,
+                exam_no=exam_no,
+                exam_type=exam_type,
+                school_code=current_user.school_code,
+                school_name=current_user.school_name,
+                grade_name=current_user.grade_name,
+                class_name=class_name,
+                subject_type=subject_type
+            )
+
+            try:
+                db.session.add(student)
+                db.session.commit()
+                flash('考生添加成功！', 'success')
+                return redirect(url_for('student_list'))
+            except Exception as e:
+                db.session.rollback()
+                flash('添加失败：' + str(e), 'danger')
+                return redirect(url_for('new_student'))
+        
+        # 如果是首次提交，显示预览
+        else:
+            # 检查考号是否已存在
+            if Student.query.filter_by(exam_no=form.exam_no.data).first():
+                flash('考号已存在！', 'danger')
+                return redirect(url_for('new_student'))
+
+            # 检查考号格式
+            exam_no = form.exam_no.data
+            if not exam_no.isdigit() or len(exam_no) != 10:
+                flash('考号必须是10位数字！', 'danger')
+                return redirect(url_for('new_student'))
+
+            # 从考号获取班级代码
+            class_name = str(current_user.school_code) + exam_no[2:4]
+            
+            # 根据考生类型判断科类属性
+            exam_type = form.exam_type.data
+            subject_type = "物理类" if exam_type.startswith('物') else "历史类" if exam_type else ""
+
+            # 创建预览对象
+            student = Student(
+                name=form.name.data,
+                exam_no=exam_no,
+                exam_type=exam_type,
+                school_code=current_user.school_code,
+                school_name=current_user.school_name,
+                grade_name=current_user.grade_name,
+                class_name=class_name,
+                subject_type=subject_type
+            )
+
+            return render_template('new_student.html', 
+                                title='新增考生', 
+                                form=form, 
+                                preview=True, 
+                                student=student)
+
+    return render_template('new_student.html', 
+                         title='新增考生', 
+                         form=form, 
+                         preview=False)
 
 @app.route('/export_students', methods=['GET'])
 @login_required
@@ -490,9 +540,7 @@ def export_students():
         '班级代码': student.class_name,
         '学届': student.grade_name,
         '姓名': student.name,
-        '学籍号': student.student_id,
-        '考生类型1': student.exam_type,
-        '考生类型2': student.exam_type1,
+        '考生类型': student.exam_type,
         '考号': student.exam_no,
         '科类属性': student.subject_type
     } for student in students]
@@ -506,12 +554,12 @@ def export_students():
         # 如果已分科，则按科目分类导出
         if has_exam_type:
             # 创建各科目工作表
-            physics_df = df[df['考生类型1'].str.contains('物', na=False)]
-            chemistry_df = df[df['考生类型1'].str.contains('化', na=False)]
-            biology_df = df[df['考生类型1'].str.contains('生', na=False)]
-            history_df = df[df['考生类型1'].str.contains('历', na=False)]
-            politics_df = df[df['考生类型1'].str.contains('政', na=False)]
-            geography_df = df[df['考生类型1'].str.contains('地', na=False)]
+            physics_df = df[df['考生类型'].str.contains('物', na=False)]
+            chemistry_df = df[df['考生类型'].str.contains('化', na=False)]
+            biology_df = df[df['考生类型'].str.contains('生', na=False)]
+            history_df = df[df['考生类型'].str.contains('历', na=False)]
+            politics_df = df[df['考生类型'].str.contains('政', na=False)]
+            geography_df = df[df['考生类型'].str.contains('地', na=False)]
 
             # 导出各科目工作表
             physics_df.to_excel(writer, sheet_name='物理', index=False)
