@@ -750,7 +750,12 @@ def student_list():
 @app.route('/export_teachers', methods=['GET'])
 @login_required
 def export_teachers():
-    teachers = Teacher.query.all()
+    # 管理员导出所有教师，非管理员只导出本学届教师
+    if current_user.grade_name:
+        teachers = Teacher.query.filter_by(teaching_grade=current_user.grade_name)
+    else:
+        teachers = Teacher.query.all()
+
     data = [{
         '编码': teacher.code,
         '姓名': teacher.name,
@@ -760,16 +765,16 @@ def export_teachers():
         '任教学科': teacher.subjects,
         '角色': teacher.role,
         '性别': teacher.gender,
-        '是否启用': teacher.enabled
+        '是否启用': '是' if teacher.enabled else '否'
     } for teacher in teachers]
 
     df = pd.DataFrame(data)
     output = io.BytesIO()
+
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         df.to_excel(writer, sheet_name='教师列表', index=False)
 
     output.seek(0)
-
     return send_file(
         output,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
