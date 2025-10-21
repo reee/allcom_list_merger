@@ -168,7 +168,11 @@ def import_students():
             return redirect(url_for('import_students'))
         
         # 读取Excel数据
-        df = pd.read_excel(file)
+        try:
+            df = pd.read_excel(file)
+        except Exception as e:
+            flash(f'读取Excel文件失败: {str(e)}', 'error')
+            return redirect(url_for('import_students'))
 
         # 根据是否分科确定必需列
         required_columns = ['姓名', '考号', '学校名称', '学届']
@@ -178,12 +182,15 @@ def import_students():
         # 检查必需列是否存在
         missing_columns = set(required_columns) - set(df.columns)
         if missing_columns:
-            flash(f"缺少必需列: {', '.join(missing_columns)}", 'error')
+            flash(f"缺少必需列: {', '.join(missing_columns)}。文件包含的列: {', '.join(df.columns.tolist())}", 'error')
             return redirect(url_for('import_students'))
         
         # 检查是否存在考号重复学生
         if not df["考号"].is_unique:
-            flash(f"学生考号不唯一，请修正后重新导入", 'error')
+            # 找出重复的考号
+            duplicated_exam_nos = df[df["考号"].duplicated(keep=False)]["考号"].unique().tolist()
+            duplicated_exam_nos = [str(no) for no in duplicated_exam_nos]
+            flash(f"学生考号不唯一，重复的考号: {', '.join(duplicated_exam_nos[:10])}{'...' if len(duplicated_exam_nos) > 10 else ''}", 'error')
             return redirect(url_for('import_students'))
 
         if form.replace.data:
@@ -196,47 +203,57 @@ def import_students():
                 db.session.delete(student)
             db.session.commit()
 
-        valid_exam_types = ["物化生", "物化政", "物化地", "物生地", "物生政", "物地政", 
+        valid_exam_types = ["物化生", "物化政", "物化地", "物生地", "物生政", "物政地", 
                           "历化政", "历化生", "历化地", "历生政", "历生地", "历政地"]
 
         # 导入学生
+        error_records = []
         for index, row in df.iterrows():
+            row_num = index + 2  # Excel行号（加2是因为索引从0开始，且有标题行）
+            student_name = str(row['姓名']).strip()
+            
             # 检查学校名称
-            if str(row['学校名称']).strip() != current_user.school_name:
-                flash(f"存在非本校学生或学校名称缺失或学校名称不匹配,请修正后重新导入", 'error')
-                return redirect(url_for('import_students'))
+            school_name = str(row['学校名称']).strip()
+            if school_name != current_user.school_name:
+                error_records.append(f"第{row_num}行: 学生 '{student_name}' 的学校名称 '{school_name}' 与当前账号学校 '{current_user.school_name}' 不匹配")
+                continue
 
             # 检查学届
-            if str(row['学届']).strip() != current_user.grade_name:
-                flash(f"存在考生学届与当前账号不匹配,请修正后重新导入", 'error')
-                return redirect(url_for('import_students'))
+            grade_name = str(row['学届']).strip()
+            if grade_name != current_user.grade_name:
+                error_records.append(f"第{row_num}行: 学生 '{student_name}' 的学届 '{grade_name}' 与当前账号学届 '{current_user.grade_name}' 不匹配")
+                continue
 
             # 检查考号位数
             exam_no = str(row['考号']).strip()
             if len(exam_no) != 10:
-                flash(f"存在考生考号缺失或位数不正确,请修正后重新导入", 'error')
-                return redirect(url_for('import_students'))
+                error_records.append(f"第{row_num}行: 学生 '{student_name}' 的考号 '{exam_no}' 不是10位数")
+                continue
 
             # 生成班级代码（学校代码 + 考号第3-4位）
             try:
                 class_code = str(current_user.school_code).zfill(1) + exam_no[2:4]
                 if len(class_code) != 3:
-                    flash(f"生成的班级代码不是3位数，请检查学校代码和考号格式", 'error')
-                    return redirect(url_for('import_students'))
+                    error_records.append(f"第{row_num}行: 学生 '{student_name}' 生成的班级代码 '{class_code}' 不是3位数")
+                    continue
             except Exception as e:
-                flash(f"生成班级代码时出错：{str(e)}", 'error')
-                return redirect(url_for('import_students'))
+                error_records.append(f"第{row_num}行: 学生 '{student_name}' 生成班级代码时出错: {str(e)}")
+                continue
 
             # 处理考生类型和科类属性
             exam_type1 = ''
             subject_type = ''
             if not form.not_divided.data:  # 如果已分科
-                exam_type1 = str(row['考生类型']).strip()
-                if exam_type1 not in valid_exam_types:
-                    flash(f"存在考生类型不正确,请修正后重新导入", 'error')
-                    return redirect(url_for('import_students'))
-                # 根据考生类型判断科类属性
-                subject_type = "物理类" if exam_type1.startswith('物') else "历史类"
+                try:
+                    exam_type1 = str(row['考生类型']).strip()
+                    if exam_type1 not in valid_exam_types:
+                        error_records.append(f"第{row_num}行: 学生 '{student_name}' 的考生类型 '{exam_type1}' 不在有效类型列表中")
+                        continue
+                    # 根据考生类型判断科类属性
+                    subject_type = "物理类" if exam_type1.startswith('物') else "历史类"
+                except Exception as e:
+                    error_records.append(f"第{row_num}行: 学生 '{student_name}' 处理考生类型时出错: {str(e)}")
+                    continue
 
             # 创建学生记录
             student = Student(
@@ -244,7 +261,7 @@ def import_students():
                 school_name=current_user.school_name,
                 grade_name=current_user.grade_name,
                 class_name=class_code,
-                name=str(row['姓名']).strip(),
+                name=student_name,
                 student_id='',  # 学籍号可为空
                 exam_type=exam_type1,  # 考生类型1
                 exam_type1='',  # 考生类型2可为空
@@ -252,6 +269,16 @@ def import_students():
                 subject_type=subject_type
             )
             db.session.add(student)
+
+        # 如果有错误记录，回滚并显示错误
+        if error_records:
+            db.session.rollback()
+            # 只显示前10条错误，避免消息过长
+            error_display = '\n'.join(error_records[:10])
+            if len(error_records) > 10:
+                error_display += f"\n...还有 {len(error_records) - 10} 条错误未显示"
+            flash(f'导入失败，以下数据有问题:\n{error_display}', 'error')
+            return redirect(url_for('import_students'))
 
         try:
             db.session.commit()
