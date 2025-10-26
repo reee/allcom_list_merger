@@ -3,11 +3,11 @@
 {% block app_content %}
 <div class="container py-4">
     <!-- 欢迎卡片 -->
-    <div class="p-5 mb-4 bg-light rounded-3">
-        <div class="container-fluid py-3">
-            <h1 class="display-5 fw-bold">欢迎使用全通跨校联考名单管理系统</h1>
-            <p class="col-md-8 fs-4">
-                尊敬的<strong class="text-primary">{{ current_user.school_name }}</strong>管理员，您好！您当前管理的是<strong class="text-primary">{{ current_user.grade_name }}</strong>学届。
+    <div class="p-5 mb-4 bg-light">
+        <div class="container-fluid py-3 text-center">
+            <h1 class="display-5 fw-bold mb-4">欢迎使用全通跨校联考名单管理系统</h1>
+            <p class="fs-4 mx-auto" style="max-width: 800px;">
+                尊敬的<strong class="text-primary">{{ current_user.school_name }}</strong>管理员，您当前管理的是<strong class="text-primary">{{ current_user.grade_name }}</strong>，请阅读下方功能说明并点击上方菜单栏开始使用！
             </p>
         </div>
     </div>
@@ -15,29 +15,29 @@
     <div class="row align-items-md-stretch">
         <!-- 考生管理说明 -->
         <div class="col-md-12 mb-4">
-            <div class="h-100 p-4 bg-light border rounded-3">
+            <div class="h-100 p-4">
                 <h2 class="border-bottom pb-2 mb-4">考生管理</h2>
                 <div class="row g-4">
                     <div class="col-md-6 col-lg-3">
-                        <div class="h-100 p-3 bg-white border rounded-3">
+                        <div class="h-100 p-3">
                             <h5 class="fw-bold">从表格导入</h5>
                             <p class="text-muted">批量导入考生信息，支持Excel文件上传。可以选择是否包含"考生类型"列。</p>
                         </div>
                     </div>
                     <div class="col-md-6 col-lg-3">
-                        <div class="h-100 p-3 bg-white border rounded-3">
+                        <div class="h-100 p-3">
                             <h5 class="fw-bold">新增单个考生</h5>
                             <p class="text-muted">手动添加单个考生信息，适用于补充个别考生数据。</p>
                         </div>
                     </div>
                     <div class="col-md-6 col-lg-3">
-                        <div class="h-100 p-3 bg-white border rounded-3">
+                        <div class="h-100 p-3">
                             <h5 class="fw-bold">编辑考生信息</h5>
                             <p class="text-muted">通过姓名搜索快速找到并修改考生信息。支持模糊搜索。</p>
                         </div>
                     </div>
                     <div class="col-md-6 col-lg-3">
-                        <div class="h-100 p-3 bg-white border rounded-3">
+                        <div class="h-100 p-3">
                             <h5 class="fw-bold">已导入考生列表</h5>
                             <p class="text-muted">查看所有已导入的考生信息，支持编辑和删除操作。</p>
                         </div>
@@ -48,23 +48,23 @@
 
         <!-- 教师管理说明 -->
         <div class="col-md-12 mb-4">
-            <div class="h-100 p-4 bg-light border rounded-3">
+            <div class="h-100 p-4">
                 <h2 class="border-bottom pb-2 mb-4">教师管理</h2>
                 <div class="row g-4">
                     <div class="col-md-6 col-lg-4">
-                        <div class="h-100 p-3 bg-white border rounded-3">
+                        <div class="h-100 p-3">
                             <h5 class="fw-bold">从表格导入</h5>
                             <p class="text-muted">批量导入教师信息，只需提供：姓名、身份证号、任教学科、学校名称、任教学届。其他信息将自动生成。</p>
                         </div>
                     </div>
                     <div class="col-md-6 col-lg-4">
-                        <div class="h-100 p-3 bg-white border rounded-3">
+                        <div class="h-100 p-3">
                             <h5 class="fw-bold">编辑教师信息</h5>
                             <p class="text-muted">通过姓名搜索快速找到并修改教师信息。支持模糊搜索。</p>
                         </div>
                     </div>
                     <div class="col-md-6 col-lg-4">
-                        <div class="h-100 p-3 bg-white border rounded-3">
+                        <div class="h-100 p-3">
                             <h5 class="fw-bold">已导入教师列表</h5>
                             <p class="text-muted">查看所有已导入的教师信息，支持编辑和删除操作。</p>
                         </div>
@@ -75,17 +75,17 @@
 
         <!-- 数据统计说明 -->
         <div class="col-md-12 mb-4">
-            <div class="h-100 p-4 bg-light border rounded-3">
+            <div class="h-100 p-4">
                 <h2 class="border-bottom pb-2 mb-4">数据统计</h2>
                 <div class="row g-4">
                     <div class="col-md-6">
-                        <div class="h-100 p-3 bg-white border rounded-3">
+                        <div class="h-100 p-3">
                             <h5 class="fw-bold">考生统计与导出</h5>
                             <p class="text-muted">查看各校考生人数统计。未分科时显示总人数，已分科时显示各科目（物理、化学、生物、历史、政治、地理）人数。导出时自动按科目分类到不同工作表。</p>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="h-100 p-3 bg-white border rounded-3">
+                        <div class="h-100 p-3">
                             <h5 class="fw-bold">教师统计与导出</h5>
                             <p class="text-muted">查看各校教师人数统计，支持导出完整教师名单。</p>
                         </div>

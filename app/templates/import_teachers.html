@@ -2,7 +2,7 @@
 
 {% block app_content %}
 <div class="container">
-    <div class="card mb-4">
+    <div class="card mb-4 bg-light shadow-sm">
         <div class="card-body">
             <h4 class="card-title">导入教师名单</h4>
             <p>当前账号仅允许导入<strong class="text-primary">{{ current_user.school_name }}</strong>-<strong class="text-primary">{{ current_user.grade_name }}</strong>教师信息。</p>
@@ -11,7 +11,7 @@
         </div>
     </div>
 
-    <div class="card">
+    <div class="card mb-4 bg-light shadow-sm">
         <div class="card-body">
             <h4 class="card-title">文档要求说明</h4>
             <ul class="list-group">
@@ -26,11 +26,12 @@
                         <li>是否启用：默认为启用状态</li>
                     </ul>
                 </li>
-                <li class="list-group-item">4. 数据要求：
+                <li class="list-group-item">4. 数据校验要求：
                     <ul>
                         <li>身份证号：必须是合法的18位身份证号码</li>
-                        <li>学校名称：必须与当前用户学校名称一致</li>
-                        <li>任教学科：必须为以下之一：语文、数学、英语、物理、化学、生物、政治、历史、地理</li>
+                        <li>学校名称：与当前用户学校名称一致</li>
+                        <li>任教学届：与当前用户学届一致</li>
+                        <li>任教学科：只能为以下之一：语文、数学、英语、物理、化学、生物、政治、历史、地理</li>
                     </ul>
                 </li>
             </ul>

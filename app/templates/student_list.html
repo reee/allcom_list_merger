@@ -8,12 +8,10 @@
         <tr>
             <th>学校代码</th>
             <th>学校名称</th>
-            <th>学届</th>
             <th>班级代码</th>
+            <th>学届</th>
             <th><a class="text-decoration-none" href="{{ url_for('student_list', sort_by='name') }}">姓名</a></th>
-            <th>学籍号</th>
-            <th><a class="text-decoration-none" href="{{ url_for('student_list', sort_by='exam_type') }}">考生类型1</a></th>
-            <th>考生类型2</th>
+            <th><a class="text-decoration-none" href="{{ url_for('student_list', sort_by='exam_type') }}">考生类型</a></th>
             <th><a class="text-decoration-none" href="{{ url_for('student_list', sort_by='exam_no') }}">考号</a></th>
             <th><a class="text-decoration-none" href="{{ url_for('student_list', sort_by='subject_type') }}">科类属性</a></th>
             <th>操作</th>
@@ -24,12 +22,10 @@
         <tr>
             <td>{{ student.school_code }}</td>
             <td>{{ student.school_name }}</td>
-            <td>{{ student.grade_name }}</td>
             <td>{{ student.class_name }}</td>
+            <td>{{ student.grade_name }}</td>
             <td>{{ student.name }}</td>
-            <td>{{ student.student_id }}</td>
             <td>{{ student.exam_type }}</td>
-            <td>{{ student.exam_type1 }}</td>
             <td>{{ student.exam_no }}</td>
             <td>{{ student.subject_type }}</td>
             <td>

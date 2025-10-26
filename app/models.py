@@ -31,9 +31,7 @@ class Student(db.Model):
     grade_name = db.Column(db.String(64))
     class_name = db.Column(db.String(64))
     name = db.Column(db.String(64))
-    student_id = db.Column(db.String(20))
     exam_type = db.Column(db.String(64))
-    exam_type1 = db.Column(db.String(64))
     exam_no = db.Column(db.String(64), unique=True)
     subject_type = db.Column(db.String(64))
 

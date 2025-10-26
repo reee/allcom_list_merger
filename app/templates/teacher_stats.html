@@ -2,12 +2,27 @@
 
 {% block app_content %}
     <h2>各校教师导入情况</h2>
+    {% if current_user.grade_name %}
+    <p class="py-2">注意：仅统计了任教学届为<strong class="text-primary">{{ current_user.grade_name }}</strong>的教师，点击导出时，也仅导出该学届教师。</p>
+    {% else %}
+    <p class="py-2">注意：以下统计信息包含<strong class="text-primary">所有学届</strong>，导出时也会包含所有学届教师。</p>
+    {% endif %}
+
     <div class="row">        
-        <table class="table">
+        <table class="table table-striped table-hover">
             <thead>
                 <tr>
                     <th>学校名称</th>
-                    <th>已导入教师人数</th>
+                    <th>总人数</th>
+                    <th>语文</th>
+                    <th>数学</th>
+                    <th>英语</th>
+                    <th>物理</th>
+                    <th>化学</th>
+                    <th>生物</th>
+                    <th>历史</th>
+                    <th>政治</th>
+                    <th>地理</th>
                 </tr>
             </thead>
             <tbody>
@@ -15,8 +30,30 @@
                 <tr>
                     <td>{{ stat.school_name }}</td>
                     <td>{{ stat.teacher_count }}</td>
+                    <td>{{ stat.chinese_count }}</td>
+                    <td>{{ stat.math_count }}</td>
+                    <td>{{ stat.english_count }}</td>
+                    <td>{{ stat.physics_count }}</td>
+                    <td>{{ stat.chemistry_count }}</td>
+                    <td>{{ stat.biology_count }}</td>
+                    <td>{{ stat.history_count }}</td>
+                    <td>{{ stat.politics_count }}</td>
+                    <td>{{ stat.geography_count }}</td>
                 </tr>
                 {% endfor %}
+                <tr>
+                    <td><strong>总计</strong></td>
+                    <td><strong>{{ total_stats.total }}</strong></td>
+                    <td><strong>{{ total_stats.chinese }}</strong></td>
+                    <td><strong>{{ total_stats.math }}</strong></td>
+                    <td><strong>{{ total_stats.english }}</strong></td>
+                    <td><strong>{{ total_stats.physics }}</strong></td>
+                    <td><strong>{{ total_stats.chemistry }}</strong></td>
+                    <td><strong>{{ total_stats.biology }}</strong></td>
+                    <td><strong>{{ total_stats.history }}</strong></td>
+                    <td><strong>{{ total_stats.politics }}</strong></td>
+                    <td><strong>{{ total_stats.geography }}</strong></td>
+                </tr>
             </tbody>
         </table>
     </div>
