@@ -244,25 +244,16 @@ def import_students():
             exam_type = ''
             subject_type = ''
             if not form.not_divided.data:  # 如果已分科
-<<<<<<< HEAD
                 try:
-                    exam_type1 = str(row['考生类型']).strip()
-                    if exam_type1 not in valid_exam_types:
-                        error_records.append(f"第{row_num}行: 学生 '{student_name}' 的考生类型 '{exam_type1}' 不在有效类型列表中")
+                    exam_type = str(row['考生类型']).strip()
+                    if exam_type not in valid_exam_types:
+                        error_records.append(f"第{row_num}行: 学生 '{student_name}' 的考生类型 '{exam_type}' 不在有效类型列表中")
                         continue
                     # 根据考生类型判断科类属性
-                    subject_type = "物理类" if exam_type1.startswith('物') else "历史类"
+                    subject_type = "物理类" if exam_type.startswith('物') else "历史类"
                 except Exception as e:
                     error_records.append(f"第{row_num}行: 学生 '{student_name}' 处理考生类型时出错: {str(e)}")
                     continue
-=======
-                exam_type = str(row['考生类型']).strip()
-                if exam_type not in valid_exam_types:
-                    flash(f"存在考生类型不正确,请修正后重新导入", 'error')
-                    return redirect(url_for('import_students'))
-                # 根据考生类型判断科类属性
-                subject_type = "物理类" if exam_type.startswith('物') else "历史类"
->>>>>>> origin/main
 
             # 创建学生记录
             student = Student(
@@ -270,15 +261,10 @@ def import_students():
                 school_name=current_user.school_name,
                 grade_name=current_user.grade_name,
                 class_name=class_code,
-<<<<<<< HEAD
                 name=student_name,
                 student_id='',  # 学籍号可为空
-                exam_type=exam_type1,  # 考生类型1
+                exam_type=exam_type,  # 考生类型
                 exam_type1='',  # 考生类型2可为空
-=======
-                name=str(row['姓名']).strip(),
-                exam_type=exam_type,
->>>>>>> origin/main
                 exam_no=exam_no,
                 subject_type=subject_type
             )
