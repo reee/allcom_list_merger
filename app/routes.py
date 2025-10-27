@@ -262,9 +262,7 @@ def import_students():
                 grade_name=current_user.grade_name,
                 class_name=class_code,
                 name=student_name,
-                student_id='',  # 学籍号可为空
                 exam_type=exam_type,  # 考生类型
-                exam_type1='',  # 考生类型2可为空
                 exam_no=exam_no,
                 subject_type=subject_type
             )
