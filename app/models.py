@@ -1,6 +1,8 @@
-from app import db, login, logger
 from flask_login import UserMixin
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
+
+from app import db, login
+
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -18,11 +20,13 @@ class User(db.Model, UserMixin):
         return check_password_hash(self.password_hash, password)
 
     def __repr__(self):
-        return '<User {}>'.format(self.username)
+        return "<User {}>".format(self.username)
+
 
 @login.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
 
 class Student(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -36,8 +40,9 @@ class Student(db.Model):
     subject_type = db.Column(db.String(64))
 
     def __repr__(self):
-        return '<Student {}>'.format(self.name)
-    
+        return "<Student {}>".format(self.name)
+
+
 class Teacher(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     code = db.Column(db.String(20), nullable=False, unique=True)
@@ -51,4 +56,4 @@ class Teacher(db.Model):
     enabled = db.Column(db.Boolean, default=True)
 
     def __repr__(self):
-        return f'<Teacher {self.name}>'
+        return f"<Teacher {self.name}>"
